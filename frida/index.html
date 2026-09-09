@@ -10,9 +10,74 @@
 <style>
 body { padding: 40px 32px; font-family: "Times New Roman", Times, serif; }
 h1, h2, p { max-width: 40em; }
+[hidden] { display: none !important; }
+
+.tf-button {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 12px 20px; margin: 0;
+  border: 1px solid #000; border-radius: 6px;
+  background: #000; color: #fff;
+  font: inherit; font-size: 1rem; line-height: 1;
+  text-decoration: none; cursor: pointer; -webkit-appearance: none;
+}
+.tf-button img { width: 22px; height: 22px; display: block; }
+.tf-button:hover { background: #1c1c1c; }
+.tf-button:active { transform: translateY(1px); }
+.tf-button:focus-visible { outline: 2px solid #000; outline-offset: 3px; }
+
+#code-form { margin-top: 1.2em; max-width: 40em; }
+#code-form label { display: block; margin-bottom: .55em; }
+#code-input {
+  font: inherit; font-size: 1rem; padding: 11px 12px; width: 8em;
+  border: 1px solid #000; border-radius: 6px; background: #fff; color: #000;
+  letter-spacing: .14em; text-transform: uppercase;
+}
+#code-form .go {
+  font: inherit; font-size: 1rem; padding: 12px 18px; margin-left: 8px;
+  border: 1px solid #000; border-radius: 6px; background: #000; color: #fff; cursor: pointer;
+}
+#code-form .go[disabled] { opacity: .5; cursor: default; }
+#code-msg { margin: .8em 0 0; min-height: 1.3em; }
+#code-msg.err { color: #b00020; }
+.shake { animation: shake .28s ease; }
+@keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+#letter-body { animation: fade .6s ease both; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+#letter hr { max-width: 40em; margin: 2.4em 0 1.6em; border: 0; border-top: 1px solid #ccc; }
+#letter code { word-break: break-all; }
+
+.signoff { margin-top: 2.4em; }
+.signoff-name { margin: 0; }
+.signoff-title { margin: .25em 0 0; font-size: .9em; }
+.sig { display: block; width: 260px; max-width: 88%; height: auto; margin: .4em 0 0 -6px; overflow: visible; }
+.sig path {
+  fill: none; stroke: #000; stroke-width: 5;
+  stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: sig-draw 1s linear forwards;
+}
+@keyframes sig-draw { to { stroke-dashoffset: 0; } }
+.sig path:nth-child(1)  { animation-duration: .39s; animation-delay: .35s; }
+.sig path:nth-child(2)  { animation-duration: .12s; animation-delay: .84s; }
+.sig path:nth-child(3)  { animation-duration: .36s; animation-delay: 1.04s; }
+.sig path:nth-child(4)  { animation-duration: .17s; animation-delay: 1.40s; }
+.sig path:nth-child(5)  { animation-duration: .07s; animation-delay: 1.57s; }
+.sig path:nth-child(6)  { animation-duration: .08s; animation-delay: 1.74s; }
+.sig path:nth-child(7)  { animation-duration: .58s; animation-delay: 2.07s; }
+.sig path:nth-child(8)  { animation-duration: .22s; animation-delay: 2.79s; }
+.sig path:nth-child(9)  { animation-duration: .25s; animation-delay: 3.01s; }
+.sig path:nth-child(10) { animation-duration: .36s; animation-delay: 3.34s; }
+
+@media (prefers-reduced-motion: reduce) {
+  #letter-body, .shake { animation: none; }
+  .sig path { animation: none; stroke-dashoffset: 0; }
+}
 </style>
 </head>
 <body>
+
+<div id="gate">
 
 <h1>Frida</h1>
 
@@ -20,11 +85,124 @@ h1, h2, p { max-width: 40em; }
 
 <p>Frida is now on TestFlight. Private beta is open.</p>
 
+<p><button type="button" class="tf-button" id="unlock" aria-expanded="false" aria-controls="code-form"><img src="/assets/testflight.png" alt=""><span>TestFlight Invited</span></button></p>
+
+<form id="code-form" hidden>
+<label for="code-input">Enter your invite code</label>
+<input id="code-input" name="code" type="text" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="24" placeholder="CODE">
+<button type="submit" class="go">Enter</button>
+<p id="code-msg" role="status" aria-live="polite"></p>
+</form>
+
 <p style="margin-top: 2em;"><a href="/frida/terms/">Terms of Service</a><br>
 <a href="/frida/privacy/">Privacy Policy</a><br>
 <a href="/">MonyCompany Inc</a></p>
 
 <p><small>&copy; 2026 MonyCompany Inc. All rights reserved.</small></p>
+
+</div>
+
+<div id="letter" hidden>
+<div id="letter-body"></div>
+<p style="margin-top: 2.4em;"><a href="/frida/" id="back">Back to Frida</a></p>
+<p><small>&copy; 2026 MonyCompany Inc. All rights reserved.</small></p>
+</div>
+
+<script type="application/json" id="tf-sealed">{"v":1,"i":250000,"s":"vdPLlvWohdTtQEe737Y1SA==","n":"/l0g0Z7nlojkW4Xp","c":"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"}</script>
+<script>
+(function () {
+  var gate = document.getElementById('gate'),
+      letter = document.getElementById('letter'),
+      body = document.getElementById('letter-body'),
+      unlock = document.getElementById('unlock'),
+      form = document.getElementById('code-form'),
+      input = document.getElementById('code-input'),
+      go = form.querySelector('.go'),
+      msg = document.getElementById('code-msg'),
+      sealed = JSON.parse(document.getElementById('tf-sealed').textContent),
+      KEY = 'frida.invite';
+
+  function bytes(b64) {
+    var bin = atob(b64), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+
+  function unseal(code) {
+    var norm = code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!norm) return Promise.reject();
+    var c = window.crypto && window.crypto.subtle;
+    if (!c) return Promise.reject();
+    return c.importKey('raw', new TextEncoder().encode(norm), 'PBKDF2', false, ['deriveKey'])
+      .then(function (base) {
+        return c.deriveKey(
+          { name: 'PBKDF2', salt: bytes(sealed.s), iterations: sealed.i, hash: 'SHA-256' },
+          base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+      })
+      .then(function (key) {
+        return c.decrypt({ name: 'AES-GCM', iv: bytes(sealed.n) }, key, bytes(sealed.c));
+      })
+      .then(function (buf) { return new TextDecoder().decode(buf); });
+  }
+
+  function reveal(html) {
+    body.innerHTML = html;
+    gate.hidden = true;
+    letter.hidden = false;
+    document.title = 'A letter from the founder — Frida';
+    window.scrollTo(0, 0);
+  }
+
+  function remember(code) {
+    try { localStorage.setItem(KEY, code); } catch (e) {}
+  }
+
+  unlock.addEventListener('click', function () {
+    var open = form.hidden;
+    form.hidden = !open;
+    unlock.setAttribute('aria-expanded', String(open));
+    if (open) input.focus();
+  });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var code = input.value;
+    msg.className = '';
+    msg.textContent = 'Checking…';
+    go.disabled = true;
+    unseal(code).then(function (html) {
+      remember(code);
+      reveal(html);
+    }).catch(function () {
+      go.disabled = false;
+      msg.className = 'err';
+      msg.textContent = window.crypto && window.crypto.subtle
+        ? 'That code doesn’t match. Check it and try again.'
+        : 'This page needs a secure (https) connection to check your code.';
+      input.classList.remove('shake');
+      void input.offsetWidth;
+      input.classList.add('shake');
+      input.select();
+    });
+  });
+
+  document.getElementById('back').addEventListener('click', function (e) {
+    e.preventDefault();
+    letter.hidden = true;
+    gate.hidden = false;
+    document.title = 'Frida';
+    window.scrollTo(0, 0);
+  });
+
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch (e) {}
+  if (saved) {
+    unseal(saved).then(reveal).catch(function () {
+      try { localStorage.removeItem(KEY); } catch (e) {}
+    });
+  }
+})();
+</script>
 
 </body>
 </html>

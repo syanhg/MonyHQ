@@ -106,9 +106,12 @@ h1, h2, p { max-width: 40em; }
 <p><small>&copy; 2026 MonyCompany Inc. All rights reserved.</small></p>
 </div>
 
-<script type="application/json" id="tf-sealed">{"v":2,"i":250000,"s":"","b":null,"e":[]}</script>
 <script>
 (function () {
+  var SUPABASE_URL = 'https://ccryphtpmhepxtfeggpa.supabase.co',
+      SUPABASE_KEY = 'sb_publishable_QL7BFGPuIrPlaOehmyPOrA_ss6cVIHe',
+      KEY = 'frida.invite';
+
   var gate = document.getElementById('gate'),
       letter = document.getElementById('letter'),
       body = document.getElementById('letter-body'),
@@ -116,48 +119,28 @@ h1, h2, p { max-width: 40em; }
       form = document.getElementById('code-form'),
       input = document.getElementById('code-input'),
       go = form.querySelector('.go'),
-      msg = document.getElementById('code-msg'),
-      sealed = JSON.parse(document.getElementById('tf-sealed').textContent),
-      KEY = 'frida.invite';
+      msg = document.getElementById('code-msg');
 
-  function bytes(b64) {
-    var bin = atob(b64), out = new Uint8Array(bin.length);
-    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-    return out;
-  }
-
-  function unseal(code) {
-    var norm = code.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    var c = window.crypto && window.crypto.subtle;
-    if (!norm || !c || !sealed.e || !sealed.e.length) return Promise.reject();
-    return c.importKey('raw', new TextEncoder().encode(norm), 'PBKDF2', false, ['deriveKey'])
-      .then(function (base) {
-        return c.deriveKey(
-          { name: 'PBKDF2', salt: bytes(sealed.s), iterations: sealed.i, hash: 'SHA-256' },
-          base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
-      })
-      .then(function (key) {
-        // One derivation, then a cheap trial decrypt per invite. Only the
-        // entry sealed with this code carries a valid authentication tag.
-        var i = 0;
-        function next() {
-          if (i >= sealed.e.length) return Promise.reject();
-          var en = sealed.e[i++];
-          return c.decrypt({ name: 'AES-GCM', iv: bytes(en.n) }, key, bytes(en.c))
-            .then(function (buf) { return JSON.parse(new TextDecoder().decode(buf)); }, next);
-        }
-        return next();
-      })
-      .then(function (who) {
-        return c.importKey('raw', bytes(who.k), 'AES-GCM', false, ['decrypt'])
-          .then(function (ck) {
-            return c.decrypt({ name: 'AES-GCM', iv: bytes(sealed.b.n) }, ck, bytes(sealed.b.c));
-          })
-          .then(function (buf) {
-            who.body = new TextDecoder().decode(buf);
-            return who;
-          });
-      });
+  // Looks the code up server-side. The tables themselves are closed to anon;
+  // open_invite() is the only door, and it answers for one exact code.
+  function openInvite(code) {
+    var norm = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (norm.length < 6) return Promise.reject(new Error('nomatch'));
+    return fetch(SUPABASE_URL + '/rest/v1/rpc/open_invite', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_code: norm })
+    }).then(function (res) {
+      if (!res.ok) throw new Error('offline');
+      return res.json();
+    }).then(function (rows) {
+      if (!rows || !rows.length) throw new Error('nomatch');
+      return rows[0];
+    });
   }
 
   function ordinal(n) {
@@ -182,9 +165,9 @@ h1, h2, p { max-width: 40em; }
     var head = document.createElement('h1');
     head.className = 'tw-h';
     head.appendChild(typeset('Invite for \u201C' + who.name + ',\u201D You\u2019re our ' +
-                             ordinal(who.ord) + ' user.'));
+                             ordinal(who.ordinal) + ' user.'));
     var rest = document.createElement('div');
-    rest.innerHTML = who.body.split('{{url}}').join(who.url);
+    rest.innerHTML = String(who.letter || '').split('{{url}}').join(who.url || '');
 
     body.textContent = '';
     body.appendChild(head);
@@ -195,8 +178,16 @@ h1, h2, p { max-width: 40em; }
     window.scrollTo(0, 0);
   }
 
-  function remember(code) {
-    try { localStorage.setItem(KEY, code); } catch (e) {}
+  function fail(err) {
+    go.disabled = false;
+    msg.className = 'err';
+    msg.textContent = (err && err.message === 'offline')
+      ? 'Could not reach the invite service. Check your connection and try again.'
+      : 'That code doesn\u2019t match. Check it and try again.';
+    input.classList.remove('shake');
+    void input.offsetWidth;
+    input.classList.add('shake');
+    input.select();
   }
 
   unlock.addEventListener('click', function () {
@@ -210,22 +201,12 @@ h1, h2, p { max-width: 40em; }
     e.preventDefault();
     var code = input.value;
     msg.className = '';
-    msg.textContent = 'Checking…';
+    msg.textContent = 'Checking\u2026';
     go.disabled = true;
-    unseal(code).then(function (who) {
-      remember(code);
+    openInvite(code).then(function (who) {
+      try { localStorage.setItem(KEY, code); } catch (e) {}
       reveal(who);
-    }).catch(function () {
-      go.disabled = false;
-      msg.className = 'err';
-      msg.textContent = window.crypto && window.crypto.subtle
-        ? 'That code doesn’t match. Check it and try again.'
-        : 'This page needs a secure (https) connection to check your code.';
-      input.classList.remove('shake');
-      void input.offsetWidth;
-      input.classList.add('shake');
-      input.select();
-    });
+    }).catch(fail);
   });
 
   document.getElementById('back').addEventListener('click', function (e) {
@@ -239,8 +220,11 @@ h1, h2, p { max-width: 40em; }
   var saved = null;
   try { saved = localStorage.getItem(KEY); } catch (e) {}
   if (saved) {
-    unseal(saved).then(reveal).catch(function () {
-      try { localStorage.removeItem(KEY); } catch (e) {}
+    openInvite(saved).then(reveal).catch(function (err) {
+      // Only forget the code if the server actually rejected it.
+      if (err && err.message === 'nomatch') {
+        try { localStorage.removeItem(KEY); } catch (e) {}
+      }
     });
   }
 })();

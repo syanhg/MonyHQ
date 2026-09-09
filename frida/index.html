@@ -143,11 +143,6 @@ h1, h2, p { max-width: 40em; }
     });
   }
 
-  function ordinal(n) {
-    var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
-    return n + (s[(v - 20) % 10] || s[v] || s[0]);
-  }
-
   function typeset(text) {
     var frag = document.createDocumentFragment();
     text.split(' ').forEach(function (word, i) {
@@ -164,8 +159,7 @@ h1, h2, p { max-width: 40em; }
   function reveal(who) {
     var head = document.createElement('h1');
     head.className = 'tw-h';
-    head.appendChild(typeset('Invite for ' + who.name + ', You\u2019re our ' +
-                             ordinal(who.ordinal) + ' user.'));
+    head.appendChild(typeset('Welcome, ' + who.name + '.'));
     var rest = document.createElement('div');
     rest.innerHTML = String(who.letter || '').split('{{url}}').join(who.url || '');
 
@@ -174,7 +168,6 @@ h1, h2, p { max-width: 40em; }
     body.appendChild(rest);
     gate.hidden = true;
     letter.hidden = false;
-    document.title = 'Invite for ' + who.name + ' \u2014 Frida';
     window.scrollTo(0, 0);
   }
 
@@ -213,7 +206,6 @@ h1, h2, p { max-width: 40em; }
     e.preventDefault();
     letter.hidden = true;
     gate.hidden = false;
-    document.title = 'Frida';
     window.scrollTo(0, 0);
   });
 

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Frida invites</title>
+<link rel="icon" type="image/png" href="/assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+<style>
+:root { --ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+body { padding: 40px 32px 80px; font-family: var(--ui); font-size: 14px; line-height: 1.5; color: #000; }
+h1 { font-size: 20px; font-weight: 500; margin: 0 0 4px; }
+h2 { font-size: 13px; font-weight: 500; margin: 34px 0 10px; text-transform: uppercase; letter-spacing: .08em; }
+p { max-width: 62em; margin: 0 0 10px; }
+.muted { color: #666; }
+[hidden] { display: none !important; }
+
+button, input, textarea { font-family: var(--ui); font-size: 13px; border-radius: 0; }
+input[type=text], input[type=number], textarea {
+  border: 1px solid #000; padding: 5px 8px; background: #fff; color: #000; line-height: 1;
+}
+input:focus, textarea:focus { outline: none; }
+textarea { line-height: 1.45; width: 100%; max-width: 62em; resize: vertical; }
+button {
+  border: 1px solid #000; background: #000; color: #fff;
+  padding: 5px 10px; line-height: 1; cursor: pointer; font-weight: 500;
+}
+button.ghost { background: #fff; color: #000; }
+button:active { transform: translateY(1px); }
+button[disabled] { opacity: .4; cursor: default; }
+
+table { border-collapse: collapse; width: 100%; max-width: 62em; margin-top: 4px; }
+th, td { border: 1px solid #000; padding: 5px 8px; text-align: left; vertical-align: middle; }
+th { font-weight: 500; background: #f4f4f4; }
+td.code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; white-space: nowrap; }
+td.n { width: 4em; }
+td.act { width: 1%; white-space: nowrap; }
+td.act button { margin-left: 4px; }
+tr.used td { color: #999; }
+.empty { color: #666; padding: 10px 0; }
+
+.row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.row label { min-width: 9em; }
+#out { height: 150px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; word-break: break-all; }
+#letter { height: 300px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.note { border-left: 2px solid #000; padding: 2px 0 2px 10px; margin: 10px 0; max-width: 62em; }
+.ok { color: #060; }
+.err { color: #b00020; }
+</style>
+</head>
+<body>
+
+<h1>Frida invites</h1>
+<p class="muted">Everything here runs in this browser. The roster never leaves this device &mdash; keep a backup with Export.</p>
+
+<h2>Invitation</h2>
+<div class="row">
+  <label for="url">TestFlight link</label>
+  <input type="text" id="url" size="46" placeholder="https://testflight.apple.com/join/…">
+</div>
+<div class="row">
+  <label for="next">Next user number</label>
+  <input type="number" id="next" min="1" step="1" style="width:6em">
+  <span class="muted">assigned to the next person you add</span>
+</div>
+
+<h2>People</h2>
+<div class="row">
+  <input type="text" id="name" size="26" placeholder="Name" autocomplete="off">
+  <button id="add">Add person</button>
+  <button class="ghost" id="copy-all">Copy all codes</button>
+</div>
+<table id="table" hidden>
+  <thead><tr><th class="n">#</th><th>Name</th><th>Code</th><th class="act"></th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+<p class="empty" id="empty">No one yet. Add a person to generate their code.</p>
+
+<h2>Letter body</h2>
+<p class="muted">HTML for the letter under the heading. The heading is generated per person. Leave <code>{{url}}</code> where the TestFlight link should go.</p>
+<textarea id="letter" spellcheck="false"></textarea>
+
+<h2>Payload</h2>
+<p class="muted">Paste this into <code>frida/index.html</code>, replacing what sits between the <code>id="tf-sealed"</code> script tags, then commit.</p>
+<div class="row">
+  <button id="gen">Generate payload</button>
+  <button class="ghost" id="copy-out" disabled>Copy payload</button>
+  <span id="status" class="muted"></span>
+</div>
+<textarea id="out" spellcheck="false" readonly></textarea>
+
+<h2>Backup</h2>
+<div class="row">
+  <button class="ghost" id="export">Export roster</button>
+  <button class="ghost" id="import-btn">Import roster</button>
+  <input type="file" id="import" accept="application/json" hidden>
+  <button class="ghost" id="wipe">Erase everything</button>
+</div>
+<p class="muted">Codes cannot be recovered from a published payload &mdash; it only holds their encrypted form. Export before clearing your browser data.</p>
+
+<script>
+(function () {
+  var KEY = 'frida.admin',
+      ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',   // no I O 0 1
+      ITER = 250000,
+      DEFAULT_LETTER = [
+        '<p>Hi, I&rsquo;m the founder of Frida.</p>',
+        '',
+        '<p>First of all, thank you so much for being here. This is my first app launch, so I&rsquo;m currently experiencing the very special combination of excitement and nervousness.</p>',
+        '',
+        '<p>I&rsquo;m a huge fan of minimal interfaces and personal agents like Poke, Instinct, and Town. Frida definitely takes inspiration from that direction, but we&rsquo;re trying to carve out our own path rather than just making &ldquo;Poke, but with a different font.&rdquo;</p>',
+        '',
+        '<p>There are also areas where, frankly, we&rsquo;re not quite there yet, especially browser capabilities and agentic payments. We know. We see it. The comparison is not exactly flattering.</p>',
+        '',
+        '<p>But here&rsquo;s what I can promise.</p>',
+        '',
+        '<p>Frida will get dramatically better, week by week. Think x5, not 5%. There will be rough edges, weird moments, and probably a few things that make you wonder what I was thinking.</p>',
+        '',
+        '<p>So if you don&rsquo;t love it at first, please give us a few chances before you delete it.</p>',
+        '',
+        '<p>We&rsquo;ll keep building until you fall in love.</p>',
+        '',
+        '<p>And if you still delete it after that&hellip; ouch. I&rsquo;ll try not to take it personally.</p>',
+        '',
+        '<div class="signoff">',
+        '<p class="signoff-name">Alex Yang</p>',
+        '<p class="signoff-title">Founder, MonyCompany Inc</p>',
+        '</div>',
+        '',
+        '<hr>',
+        '',
+        '<p>Your invitation is below. It opens in the TestFlight app.</p>',
+        '',
+        '<p><a class="tf-button" href="{{url}}" target="_blank" rel="noopener"><img src="/assets/testflight.png" alt=""><span>Open TestFlight</span></a></p>',
+        '',
+        '<p><small>If the button does nothing, copy this link into Safari on your iPhone:<br><code>{{url}}</code></small></p>'
+      ].join('\n');
+
+  var $ = function (id) { return document.getElementById(id); };
+  var state = load();
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return { url: '', next: 1, people: [], letter: DEFAULT_LETTER };
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function newCode() {
+    var b = new Uint8Array(10), out = '';
+    crypto.getRandomValues(b);
+    for (var i = 0; i < 10; i++) out += ALPHA[b[i] % ALPHA.length];
+    return out.slice(0, 5) + '-' + out.slice(5);
+  }
+
+  function ordinal(n) {
+    var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+
+  function render() {
+    $('url').value = state.url || '';
+    $('next').value = state.next || 1;
+    if ($('letter').value !== state.letter) $('letter').value = state.letter;
+
+    var rows = $('rows');
+    rows.textContent = '';
+    state.people.forEach(function (p, i) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td class="n">' + p.ord + '</td>' +
+        '<td></td><td class="code"></td>' +
+        '<td class="act"><button class="ghost" data-copy="' + i + '">Copy</button>' +
+        '<button class="ghost" data-del="' + i + '">Delete</button></td>';
+      tr.children[1].textContent = p.name;
+      tr.children[2].textContent = p.code;
+      rows.appendChild(tr);
+    });
+    $('table').hidden = !state.people.length;
+    $('empty').hidden = !!state.people.length;
+  }
+
+  function setStatus(msg, cls) {
+    var el = $('status');
+    el.textContent = msg;
+    el.className = cls || 'muted';
+  }
+
+  // ---- crypto -------------------------------------------------------------
+  function b64(buf) {
+    var b = new Uint8Array(buf), s = '';
+    for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+    return btoa(s);
+  }
+  function normalize(code) { return code.toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+
+  function deriveKey(code, salt) {
+    return crypto.subtle
+      .importKey('raw', new TextEncoder().encode(normalize(code)), 'PBKDF2', false, ['deriveKey'])
+      .then(function (base) {
+        return crypto.subtle.deriveKey(
+          { name: 'PBKDF2', salt: salt, iterations: ITER, hash: 'SHA-256' },
+          base, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+      });
+  }
+
+  function generate() {
+    if (!state.people.length) { setStatus('Add at least one person first.', 'err'); return; }
+    if (!state.url.trim()) { setStatus('Set the TestFlight link first.', 'err'); return; }
+    setStatus('Encrypting…');
+    $('gen').disabled = true;
+
+    var salt = crypto.getRandomValues(new Uint8Array(16));
+    var entries = [];
+
+    // The letter itself is encrypted once under a random content key. Each
+    // person's entry carries that key, so the prose is stored a single time
+    // and still never appears in the published page.
+    var raw = crypto.getRandomValues(new Uint8Array(32));
+    var bodyIv = crypto.getRandomValues(new Uint8Array(12));
+    var sealedBody = null;
+
+    crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt'])
+      .then(function (contentKey) {
+        return crypto.subtle.encrypt({ name: 'AES-GCM', iv: bodyIv }, contentKey,
+          new TextEncoder().encode(state.letter));
+      })
+      .then(function (ct) {
+        sealedBody = { n: b64(bodyIv), c: b64(ct) };
+        return state.people.reduce(function (chain, p) {
+          return chain.then(function () {
+            return deriveKey(p.code, salt).then(function (key) {
+              var iv = crypto.getRandomValues(new Uint8Array(12));
+              var body = JSON.stringify({
+                name: p.name, ord: p.ord, url: state.url.trim(), k: b64(raw)
+              });
+              return crypto.subtle
+                .encrypt({ name: 'AES-GCM', iv: iv }, key, new TextEncoder().encode(body))
+                .then(function (ct) { entries.push({ n: b64(iv), c: b64(ct) }); });
+            });
+          });
+        }, Promise.resolve());
+      }).then(function () {
+      // shuffle so entry order does not leak the invite order
+      for (var i = entries.length - 1; i > 0; i--) {
+        var j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1);
+        var t = entries[i]; entries[i] = entries[j]; entries[j] = t;
+      }
+      $('out').value = JSON.stringify({ v: 2, i: ITER, s: b64(salt), b: sealedBody, e: entries });
+      $('copy-out').disabled = false;
+      $('gen').disabled = false;
+      setStatus('Sealed ' + entries.length + ' invite' + (entries.length > 1 ? 's' : '') + '.', 'ok');
+    }).catch(function (err) {
+      $('gen').disabled = false;
+      setStatus('Failed: ' + (err && err.message ? err.message : 'unknown error'), 'err');
+    });
+  }
+
+  function copy(text, msg) {
+    var done = function () { setStatus(msg, 'ok'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { setStatus('Could not copy.', 'err'); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { setStatus('Could not copy.', 'err'); }
+      document.body.removeChild(ta);
+    }
+  }
+
+  // ---- events -------------------------------------------------------------
+  $('url').addEventListener('input', function () { state.url = this.value; save(); });
+  $('next').addEventListener('input', function () { state.next = parseInt(this.value, 10) || 1; save(); });
+  $('letter').addEventListener('input', function () { state.letter = this.value; save(); });
+
+  $('add').addEventListener('click', function () {
+    var name = $('name').value.trim();
+    if (!name) { $('name').focus(); return; }
+    state.people.push({ name: name, ord: state.next, code: newCode() });
+    state.next = state.next + 1;
+    $('name').value = '';
+    save(); render(); $('name').focus();
+    setStatus(name + ' added as the ' + ordinal(state.people[state.people.length - 1].ord) + ' user. Regenerate the payload to publish.', 'ok');
+  });
+  $('name').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); $('add').click(); }
+  });
+
+  $('rows').addEventListener('click', function (e) {
+    var del = e.target.getAttribute('data-del'), cp = e.target.getAttribute('data-copy');
+    if (del !== null) {
+      var p = state.people[+del];
+      if (!confirm('Delete ' + p.name + '? Their code stops working once you regenerate and publish.')) return;
+      state.people.splice(+del, 1); save(); render(); setStatus('Removed ' + p.name + '.', 'ok');
+    } else if (cp !== null) {
+      copy(state.people[+cp].code, 'Copied ' + state.people[+cp].name + '’s code.');
+    }
+  });
+
+  $('copy-all').addEventListener('click', function () {
+    if (!state.people.length) return;
+    copy(state.people.map(function (p) { return p.name + '\t' + ordinal(p.ord) + '\t' + p.code; }).join('\n'),
+         'Copied ' + state.people.length + ' codes.');
+  });
+
+  $('gen').addEventListener('click', generate);
+  $('copy-out').addEventListener('click', function () { copy($('out').value, 'Payload copied.'); });
+
+  $('export').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'frida-invites.json';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+  $('import-btn').addEventListener('click', function () { $('import').click(); });
+  $('import').addEventListener('change', function () {
+    var f = this.files[0]; if (!f) return;
+    f.text().then(function (t) {
+      var next = JSON.parse(t);
+      if (!next || !Array.isArray(next.people)) throw new Error('not a roster file');
+      state = { url: next.url || '', next: next.next || 1, people: next.people, letter: next.letter || DEFAULT_LETTER };
+      save(); render();
+      setStatus('Imported ' + state.people.length + ' people.', 'ok');
+    }).catch(function (e) { setStatus('Import failed: ' + e.message, 'err'); });
+    this.value = '';
+  });
+
+  $('wipe').addEventListener('click', function () {
+    if (!confirm('Erase the roster, codes and letter from this browser? Export first if you want a copy.')) return;
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    state = { url: '', next: 1, people: [], letter: DEFAULT_LETTER };
+    $('out').value = ''; $('copy-out').disabled = true;
+    render(); setStatus('Erased.', 'ok');
+  });
+
+  if (!state.letter) state.letter = DEFAULT_LETTER;
+  render();
+})();
+</script>
+
+</body>
+</html>

@@ -125,7 +125,7 @@ insert into public.app_config (key, value) values
 
 <p>First of all, thank you so much for being here. This is my first app launch, so I&rsquo;m currently experiencing the very special combination of excitement and nervousness.</p>
 
-<p>I&rsquo;m a huge fan of minimal interfaces and personal agents like Poke, Instinct, and Town. Frida definitely takes inspiration from that direction, but we&rsquo;re trying to carve out our own path rather than just making &ldquo;Poke, but with a different font.&rdquo;</p>
+<p>I&rsquo;m a huge fan of minimal interfaces and personal agents like Poke and Instinct. Frida definitely takes inspiration from that direction, but we&rsquo;re trying to carve out our own path rather than just making &ldquo;Poke, but with a different font.&rdquo;</p>
 
 <p>There are also areas where, frankly, we&rsquo;re not quite there yet, especially browser capabilities and agentic payments. We know. We see it. The comparison is not exactly flattering.</p>
 
@@ -138,6 +138,8 @@ insert into public.app_config (key, value) values
 <p>We&rsquo;ll keep building until you fall in love.</p>
 
 <p>And if you still delete it after that&hellip; ouch.</p>
+
+<p>Genuinely, thank you for being one of my first users.</p>
 
 <div class="signoff">
 <p class="signoff-name">Alex Yang</p>

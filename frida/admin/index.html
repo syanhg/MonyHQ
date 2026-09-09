@@ -18,12 +18,11 @@ p { max-width: 62em; margin: 0 0 10px; }
 .muted { color: #666; }
 [hidden] { display: none !important; }
 
-button, input, textarea { font-family: var(--ui); font-size: 13px; border-radius: 0; }
-input[type=text], input[type=email], input[type=password], input[type=number], textarea {
+button, input { font-family: var(--ui); font-size: 13px; border-radius: 0; }
+input[type=text], input[type=email], input[type=password] {
   border: 1px solid #000; padding: 5px 8px; background: #fff; color: #000; line-height: 1;
 }
-input:focus, textarea:focus { outline: none; }
-textarea { line-height: 1.45; width: 100%; max-width: 62em; resize: vertical; }
+input:focus { outline: none; }
 button {
   border: 1px solid #000; background: #000; color: #fff;
   padding: 5px 10px; line-height: 1; cursor: pointer; font-weight: 500;
@@ -42,7 +41,6 @@ td.act button { margin-left: 4px; }
 
 .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
 .row label { min-width: 9em; }
-#letter { height: 280px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 .ok { color: #060; }
 .err { color: #b00020; }
 #signin { max-width: 22em; }
@@ -85,11 +83,6 @@ td.act button { margin-left: 4px; }
     <tbody id="rows"></tbody>
   </table>
   <p class="empty" id="empty">No one yet. Add a person to generate their code.</p>
-
-  <h2>Letter body</h2>
-  <p class="muted">Shared by everyone. Only the heading is personalised. Leave <code>{{url}}</code> where the TestFlight link should go.</p>
-  <textarea id="letter" spellcheck="false"></textarea>
-  <div class="row" style="margin-top:8px"><button id="save-letter">Save letter</button></div>
 
   <p class="muted" id="status" style="margin-top:18px"></p>
 </div>
@@ -215,7 +208,6 @@ td.act button { margin-left: 4px; }
       config = {};
       (res[1] || []).forEach(function (r) { config[r.key] = r.value; });
       $('url').value = config.testflight_url || '';
-      $('letter').value = config.letter_body || '';
       render();
     });
   }
@@ -266,15 +258,6 @@ td.act button { margin-left: 4px; }
       method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal',
       body: [{ key: 'testflight_url', value: v, updated_at: new Date().toISOString() }]
     }).then(function () { config.testflight_url = v; status('TestFlight link saved.', 'ok'); })
-      .catch(function (e) { status('Save failed: ' + e.message, 'err'); });
-  });
-
-  $('save-letter').addEventListener('click', function () {
-    var v = $('letter').value;
-    db('app_config?on_conflict=key', {
-      method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal',
-      body: [{ key: 'letter_body', value: v, updated_at: new Date().toISOString() }]
-    }).then(function () { config.letter_body = v; status('Letter saved.', 'ok'); })
       .catch(function (e) { status('Save failed: ' + e.message, 'err'); });
   });
 

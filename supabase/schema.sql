@@ -3,7 +3,7 @@
 --
 -- Model:
 --   invites     one row per invited person (name, their user number, their code)
---   app_config  the TestFlight link and the shared letter body
+--   app_config  the TestFlight link
 --   admins      which auth users may manage the above
 --
 -- The public site never reads these tables directly. It calls open_invite(),
@@ -90,8 +90,9 @@ create policy config_admin_write on public.app_config
 -- SECURITY DEFINER on purpose: this is the one door anon may open, and it
 -- only ever returns the single row whose code was supplied.
 
-create or replace function public.open_invite(p_code text)
-returns table (name text, ordinal integer, url text, letter text)
+drop function if exists public.open_invite(text);
+create function public.open_invite(p_code text)
+returns table (name text, ordinal integer, url text)
 language plpgsql
 stable
 security definer
@@ -107,8 +108,7 @@ begin
   return query
     select i.name,
            i.ordinal,
-           coalesce((select c.value from public.app_config c where c.key = 'testflight_url'), ''),
-           coalesce((select c.value from public.app_config c where c.key = 'letter_body'), '')
+           coalesce((select c.value from public.app_config c where c.key = 'testflight_url'), '')
       from public.invites i
      where i.code = v_code;
 end;
@@ -120,41 +120,7 @@ grant  execute on function public.open_invite(text) to anon, authenticated;
 -- ------------------------------------------------------------------ seed ---
 
 insert into public.app_config (key, value) values
-  ('testflight_url', 'https://testflight.apple.com/join/kH82MMnp'),
-  ('letter_body', '<p>Hi, I&rsquo;m the founder of Frida.</p>
-
-<p>First of all, thank you so much for being here. This is my first app launch, so I&rsquo;m currently experiencing the very special combination of excitement and nervousness.</p>
-
-<p>I&rsquo;m a huge fan of minimal interfaces and personal agents like Poke &amp; Instinct.</p>
-
-<p>Frida definitely takes inspiration from that direction, but we&rsquo;re trying to carve out our own path rather than just making &ldquo;Poke, but with a different font.&rdquo;</p>
-
-<p>There are also areas where, frankly, we&rsquo;re not quite there yet, especially browser capabilities and agentic payments. We know. We see it. The comparison is not exactly flattering.</p>
-
-<p>But here&rsquo;s what I can promise.</p>
-
-<p>Frida will get dramatically better, week by week. Think x5, not 5%. There will be rough edges, weird moments, and probably a few things that make you wonder what I was thinking.</p>
-
-<p>So if you don&rsquo;t love it at first, please give us a few chances before you delete it.</p>
-
-<p>We&rsquo;ll keep building until you fall in love.</p>
-
-<p>And if you still delete it after that&hellip; ouch.</p>
-
-<p>Genuinely, thank you for being one of my first users.</p>
-
-<div class="signoff">
-<p class="signoff-name">Alex Yang</p>
-<p class="signoff-title">Founder, MonyCompany Inc</p>
-</div>
-
-<hr>
-
-<p>Your invitation is below. It opens in the TestFlight app.</p>
-
-<p><a class="tf-button" href="{{url}}" target="_blank" rel="noopener"><img src="/assets/testflight.png" alt=""><span>Open TestFlight</span></a></p>
-
-<p><small>If the button does nothing, copy this link into Safari on your iPhone:<br><code>{{url}}</code></small></p>')
+  ('testflight_url', 'https://testflight.apple.com/join/kH82MMnp')
 on conflict (key) do nothing;
 
 -- ----------------------------------------------------------------- admin ---

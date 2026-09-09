@@ -101,7 +101,44 @@ h1, h2, p { max-width: 40em; }
 </div>
 
 <div id="letter" hidden>
-<div id="letter-body"></div>
+<div id="letter-body">
+<h1 class="tw-h" id="greeting"></h1>
+
+<p>Hi, I&rsquo;m the founder of Frida.</p>
+
+<p>First of all, thank you so much for being here. This is my first app launch, so I&rsquo;m currently experiencing the very special combination of excitement and nervousness.</p>
+
+<p>I&rsquo;m a huge fan of minimal interfaces and personal agents like Poke &amp; Instinct.</p>
+
+<p>Frida definitely takes inspiration from that direction, but we&rsquo;re trying to carve out our own path rather than just making &ldquo;Poke, but with a different font.&rdquo;</p>
+
+<p>There are also areas where, frankly, we&rsquo;re not quite there yet, especially browser capabilities and agentic payments. We know. We see it. The comparison is not exactly flattering.</p>
+
+<p>But here&rsquo;s what I can promise.</p>
+
+<p>Frida will get dramatically better, week by week. Think x5, not 5%. There will be rough edges, weird moments, and probably a few things that make you wonder what I was thinking.</p>
+
+<p>So if you don&rsquo;t love it at first, please give us a few chances before you delete it.</p>
+
+<p>We&rsquo;ll keep building until you fall in love.</p>
+
+<p>And if you still delete it after that&hellip; ouch.</p>
+
+<p>Genuinely, thank you for being one of my first users.</p>
+
+<div class="signoff">
+<p class="signoff-name">Alex Yang</p>
+<p class="signoff-title">Founder, MonyCompany Inc</p>
+</div>
+
+<hr>
+
+<p>Your invitation is below. It opens in the TestFlight app.</p>
+
+<p><a class="tf-button" id="tf-link" href="#" target="_blank" rel="noopener"><img src="/assets/testflight.png" alt=""><span>Open TestFlight</span></a></p>
+
+<p><small>If the button does nothing, copy this link into Safari on your iPhone:<br><code id="tf-url"></code></small></p>
+</div>
 <p style="margin-top: 2.4em;"><a href="/frida/" id="back">Back to Frida</a></p>
 <p><small>&copy; 2026 MonyCompany Inc. All rights reserved.</small></p>
 </div>
@@ -114,7 +151,7 @@ h1, h2, p { max-width: 40em; }
 
   var gate = document.getElementById('gate'),
       letter = document.getElementById('letter'),
-      body = document.getElementById('letter-body'),
+      greeting = document.getElementById('greeting'),
       unlock = document.getElementById('unlock'),
       form = document.getElementById('code-form'),
       input = document.getElementById('code-input'),
@@ -157,15 +194,10 @@ h1, h2, p { max-width: 40em; }
   }
 
   function reveal(who) {
-    var head = document.createElement('h1');
-    head.className = 'tw-h';
-    head.appendChild(typeset('Welcome, ' + who.name + '.'));
-    var rest = document.createElement('div');
-    rest.innerHTML = String(who.letter || '').split('{{url}}').join(who.url || '');
-
-    body.textContent = '';
-    body.appendChild(head);
-    body.appendChild(rest);
+    greeting.textContent = '';
+    greeting.appendChild(typeset('Welcome, ' + who.name + '.'));
+    document.getElementById('tf-link').href = who.url || '';
+    document.getElementById('tf-url').textContent = who.url || '';
     gate.hidden = true;
     letter.hidden = false;
     window.scrollTo(0, 0);

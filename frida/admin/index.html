@@ -214,10 +214,16 @@ td.act button { margin-left: 4px; }
   }
 
   function loadAll() {
-    return Promise.all([
-      db('invites?select=id,name,ordinal,code&order=ordinal.asc'),
-      db('app_config?select=key,value')
-    ]).then(function (res) {
+    // RLS makes a non-admin's SELECT return zero rows rather than an error, so
+    // check membership explicitly — otherwise the page looks fine until the
+    // first save fails with a policy violation.
+    return db('admins?select=user_id&limit=1').then(function (rows) {
+      if (!rows || !rows.length) throw new Error('not-admin');
+      return Promise.all([
+        db('invites?select=id,name,ordinal,code&order=ordinal.asc'),
+        db('app_config?select=key,value')
+      ]);
+    }).then(function (res) {
       invites = res[0] || [];
       config = {};
       (res[1] || []).forEach(function (r) { config[r.key] = r.value; });
@@ -227,12 +233,22 @@ td.act button { margin-left: 4px; }
     });
   }
 
+  function loadFailed(e) {
+    if (e && e.message === 'not-admin') {
+      $('status').className = 'err';
+      $('status').textContent = 'Signed in, but this account is not an admin. Run this in the ' +
+        'Supabase SQL editor, then reload:  insert into public.admins (user_id) select id from ' +
+        'auth.users where email = \'' + ((session && session.user && session.user.email) || 'you@example.com') +
+        '\' on conflict do nothing;';
+    } else {
+      status('Could not load: ' + (e && e.message), 'err');
+    }
+  }
+
   function start(email) {
     showApp(true, email);
     status('Loading…');
-    return loadAll().then(function () { status(''); }).catch(function (e) {
-      status('Could not load: ' + e.message + ' — is your user in the admins table?', 'err');
-    });
+    return loadAll().then(function () { status(''); }).catch(loadFailed);
   }
 
   // ---- events -------------------------------------------------------------
@@ -325,7 +341,8 @@ td.act button { margin-left: 4px; }
   // ---- boot ---------------------------------------------------------------
   if (session && session.access_token) {
     showApp(true, session.user && session.user.email);
-    loadAll().then(function () { status(''); }).catch(function () {
+    loadAll().then(function () { status(''); }).catch(function (e) {
+      if (e && e.message === 'not-admin') { loadFailed(e); return; }
       return refresh().then(function (s) { return start(s.user && s.user.email); })
         .catch(function () { saveSession(null); showApp(false); });
     });

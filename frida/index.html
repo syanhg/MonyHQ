@@ -164,7 +164,7 @@ h1, h2, p { max-width: 40em; }
   function reveal(who) {
     var head = document.createElement('h1');
     head.className = 'tw-h';
-    head.appendChild(typeset('Invite for \u201C' + who.name + ',\u201D You\u2019re our ' +
+    head.appendChild(typeset('Invite for ' + who.name + ', You\u2019re our ' +
                              ordinal(who.ordinal) + ' user.'));
     var rest = document.createElement('div');
     rest.innerHTML = String(who.letter || '').split('{{url}}').join(who.url || '');

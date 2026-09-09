@@ -36,7 +36,6 @@ table { border-collapse: collapse; width: 100%; max-width: 62em; margin-top: 4px
 th, td { border: 1px solid #000; padding: 5px 8px; text-align: left; vertical-align: middle; }
 th { font-weight: 500; background: #f4f4f4; }
 td.code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; white-space: nowrap; }
-td.n { width: 4em; }
 td.act { width: 1%; white-space: nowrap; }
 td.act button { margin-left: 4px; }
 .empty { color: #666; padding: 10px 0; }
@@ -78,13 +77,11 @@ td.act button { margin-left: 4px; }
   <h2>People</h2>
   <div class="row">
     <input type="text" id="name" size="24" placeholder="Name" autocomplete="off">
-    <label for="next" style="min-width:auto">as user #</label>
-    <input type="number" id="next" min="1" step="1" style="width:5.5em">
     <button id="add">Add person</button>
     <button class="ghost" id="copy-all">Copy all codes</button>
   </div>
   <table id="table" hidden>
-    <thead><tr><th class="n">#</th><th>Name</th><th>Code</th><th class="act"></th></tr></thead>
+    <thead><tr><th>Name</th><th>Code</th><th class="act"></th></tr></thead>
     <tbody id="rows"></tbody>
   </table>
   <p class="empty" id="empty">No one yet. Add a person to generate their code.</p>
@@ -171,10 +168,6 @@ td.act button { margin-left: 4px; }
     return out;
   }
   function pretty(code) { return code.slice(0, 5) + '-' + code.slice(5); }
-  function ordinal(n) {
-    var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
-    return n + (s[(v - 20) % 10] || s[v] || s[0]);
-  }
   function copy(text, msg) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function () { status(msg, 'ok'); },
@@ -188,19 +181,15 @@ td.act button { margin-left: 4px; }
     rows.textContent = '';
     invites.forEach(function (p) {
       var tr = document.createElement('tr');
-      tr.innerHTML = '<td class="n"></td><td></td><td class="code"></td>' +
+      tr.innerHTML = '<td></td><td class="code"></td>' +
         '<td class="act"><button class="ghost" data-copy="' + p.id + '">Copy</button>' +
         '<button class="ghost" data-del="' + p.id + '">Delete</button></td>';
-      tr.children[0].textContent = p.ordinal;
-      tr.children[1].textContent = p.name;
-      tr.children[2].textContent = pretty(p.code);
+      tr.children[0].textContent = p.name;
+      tr.children[1].textContent = pretty(p.code);
       rows.appendChild(tr);
     });
     $('table').hidden = !invites.length;
     $('empty').hidden = !!invites.length;
-
-    var max = invites.reduce(function (m, p) { return Math.max(m, p.ordinal); }, 0);
-    if (document.activeElement !== $('next')) $('next').value = max + 1;
   }
 
   function showApp(on, email) {
@@ -208,9 +197,7 @@ td.act button { margin-left: 4px; }
     $('signin').hidden = on;
     $('signout').hidden = !on;
     $('who').textContent = on ? (email || '') : '';
-    $('lede').textContent = on
-      ? 'Changes are live the moment you save — no deploy needed.'
-      : 'Sign in to manage invite codes.';
+    $('lede').hidden = on;
   }
 
   function loadAll() {
@@ -292,9 +279,11 @@ td.act button { margin-left: 4px; }
   });
 
   $('add').addEventListener('click', function () {
-    var name = $('name').value.trim(), ord = parseInt($('next').value, 10);
+    var name = $('name').value.trim();
     if (!name) { $('name').focus(); return; }
-    if (!(ord > 0)) { $('next').focus(); return; }
+    // Nobody is told their number any more, but the column is still not null,
+    // so keep handing out the next one to fix the order of the list.
+    var ord = invites.reduce(function (m, p) { return Math.max(m, p.ordinal); }, 0) + 1;
     var code = newCode();
     db('invites', {
       method: 'POST', prefer: 'return=representation',
@@ -305,7 +294,7 @@ td.act button { margin-left: 4px; }
       $('name').value = '';
       render();
       $('name').focus();
-      status(name + ' added as the ' + ordinal(ord) + ' user. Code ' + pretty(code) + '.', 'ok');
+      status(name + ' added. Code ' + pretty(code) + '.', 'ok');
     }).catch(function (e) { status('Could not add: ' + e.message, 'err'); });
   });
 
@@ -334,7 +323,7 @@ td.act button { margin-left: 4px; }
   $('copy-all').addEventListener('click', function () {
     if (!invites.length) return;
     copy(invites.map(function (p) {
-      return p.name + '\t' + ordinal(p.ordinal) + '\t' + pretty(p.code);
+      return p.name + '\t' + pretty(p.code);
     }).join('\n'), 'Copied ' + invites.length + ' codes.');
   });
 

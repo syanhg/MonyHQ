@@ -17,6 +17,8 @@
   --gutter: clamp(24px, 6vw, 96px);
   --measure: 1360px;
   --hairline: #ededed;
+  --pill-bg: #f1f1f1;
+  --pill-ink: #4a4a4a;
   --radius: 14px;
   --step: 18ms;
   color-scheme: light;
@@ -52,6 +54,21 @@ body {
   padding-inline: var(--gutter);
   padding-block: clamp(72px, 18vh, 200px) clamp(64px, 14vh, 160px);
   text-align: center;
+}
+
+/* Quiet announcement above the line: grey enough to sit behind the
+   headline, dark enough to stay legible on its own ground. */
+.pill {
+  display: inline-block;
+  margin: 0 0 clamp(20px, 3.5vh, 32px);
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: var(--pill-bg);
+  color: var(--pill-ink);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  line-height: 1;
 }
 
 /* Inter wants real negative tracking even at this size. */
@@ -100,14 +117,19 @@ body {
   animation: settle 620ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
+.is-animated .pill {
+  animation: settle 620ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation-delay: calc(2 * var(--step));
+}
+
 .is-animated .hero h1 .c {
   animation: settle 620ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  animation-delay: calc((var(--i) + 4) * var(--step));
+  animation-delay: calc((var(--i) + 6) * var(--step));
 }
 
 .is-animated .reel {
   animation: settle 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  animation-delay: calc((var(--n) + 4) * var(--step));
+  animation-delay: calc((var(--n) + 6) * var(--step));
 }
 </style>
 </head>
@@ -116,6 +138,7 @@ body {
 <header class="mark">Mony</header>
 
 <section class="hero">
+  <div class="pill">Frida TestFlight Access Available</div>
   <h1>We build agentic interfaces <br>with minimalistic complexity</h1>
   <div class="reel">
     <video src="assets/frida2.mp4" width="1846" height="1078" autoplay muted loop playsinline preload="metadata" disablepictureinpicture></video>

@@ -14,7 +14,6 @@
 :root {
   --paper: #ffffff;
   --ink: #000000;
-  --grey: #ebebeb;
   --gutter: clamp(24px, 6vw, 96px);
   --measure: 1360px;
   color-scheme: light;
@@ -57,20 +56,14 @@ body {
   .hero h1 br { display: none; }
 }
 
-/* The reel sits on a near-white ground, so the rule is what gives it an
-   edge against the paper. Same grey as the block below it. */
+/* Unframed and well short of the column, so it reads as a clip sitting on
+   the page rather than a band across it. */
 .reel {
   display: block;
   width: 100%;
+  max-width: 640px;
   height: auto;
-  margin-top: clamp(48px, 11vh, 128px);
-  border: 1px solid var(--grey);
-}
-
-.placeholder {
-  margin-top: clamp(24px, 5vh, 56px);
-  aspect-ratio: 16 / 9;
-  background: var(--grey);
+  margin: clamp(40px, 9vh, 96px) auto 0;
 }
 </style>
 </head>
@@ -79,7 +72,6 @@ body {
 <section class="hero">
   <h1>We build agentic interfaces <br>with minimalistic complexity.</h1>
   <video class="reel" src="assets/frida2.mp4" width="1846" height="1080" autoplay muted loop playsinline preload="metadata" disablepictureinpicture></video>
-  <div class="placeholder"></div>
 </section>
 
 <script>

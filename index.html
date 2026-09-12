@@ -16,6 +16,8 @@
   --ink: #000000;
   --gutter: clamp(24px, 6vw, 96px);
   --measure: 1360px;
+  --hairline: #ededed;
+  --radius: 14px;
   --step: 18ms;
   color-scheme: light;
 }
@@ -45,10 +47,10 @@ body {
 /* Inter wants real negative tracking even at this size. */
 .hero h1 {
   margin: 0;
-  font-size: clamp(1.75rem, 4vw, 3.5rem);
+  font-size: clamp(1.5rem, 3.2vw, 2.75rem);
   font-weight: 500;
-  line-height: 1.06;
-  letter-spacing: -0.03em;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
 }
 
 /* Deterministic break at the grammatical seam; natural wrap once narrow. */
@@ -56,14 +58,22 @@ body {
   .hero h1 br { display: none; }
 }
 
-/* Unframed and well short of the column, so it reads as a clip sitting on
-   the page rather than a band across it. */
+/* Well short of the column, so it reads as a clip sitting on the page
+   rather than a band across it. The wrapper carries the frame: Safari is
+   unreliable about clipping a video to its own border-radius. */
 .reel {
-  display: block;
   width: 100%;
   max-width: 640px;
-  height: auto;
   margin: clamp(40px, 9vh, 96px) auto 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.reel video {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 /* One page-load sequence: the line resolves letter by letter, then the
@@ -91,7 +101,9 @@ body {
 
 <section class="hero">
   <h1>We build agentic interfaces <br>with minimalistic complexity.</h1>
-  <video class="reel" src="assets/frida2.mp4" width="1846" height="1080" autoplay muted loop playsinline preload="metadata" disablepictureinpicture></video>
+  <div class="reel">
+    <video src="assets/frida2.mp4" width="1846" height="1080" autoplay muted loop playsinline preload="metadata" disablepictureinpicture></video>
+  </div>
 </section>
 
 <script>

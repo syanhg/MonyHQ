@@ -14,7 +14,7 @@
 :root {
   --paper: #ffffff;
   --ink: #000000;
-  --placeholder: #ebebeb;
+  --grey: #ebebeb;
   --gutter: clamp(24px, 6vw, 96px);
   --measure: 1360px;
   color-scheme: light;
@@ -57,10 +57,20 @@ body {
   .hero h1 br { display: none; }
 }
 
-.placeholder {
+/* The reel sits on a near-white ground, so the rule is what gives it an
+   edge against the paper. Same grey as the block below it. */
+.reel {
+  display: block;
+  width: 100%;
+  height: auto;
   margin-top: clamp(48px, 11vh, 128px);
+  border: 1px solid var(--grey);
+}
+
+.placeholder {
+  margin-top: clamp(24px, 5vh, 56px);
   aspect-ratio: 16 / 9;
-  background: var(--placeholder);
+  background: var(--grey);
 }
 </style>
 </head>
@@ -68,8 +78,19 @@ body {
 
 <section class="hero">
   <h1>We build agentic interfaces <br>with minimalistic complexity.</h1>
+  <video class="reel" src="assets/frida2.mp4" width="1846" height="1080" autoplay muted loop playsinline preload="metadata" disablepictureinpicture></video>
   <div class="placeholder"></div>
 </section>
+
+<script>
+if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  for (const v of document.querySelectorAll('video')) {
+    v.removeAttribute('autoplay');
+    v.controls = true;
+    v.pause();
+  }
+}
+</script>
 
 </body>
 </html>

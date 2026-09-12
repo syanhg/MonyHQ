@@ -14,6 +14,7 @@
 :root {
   --paper: #ffffff;
   --ink: #000000;
+  --placeholder: #ebebeb;
   --gutter: clamp(24px, 6vw, 96px);
   --measure: 1360px;
   color-scheme: light;
@@ -33,17 +34,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.page {
+.hero {
   max-width: var(--measure);
   margin: 0 auto;
   padding-inline: var(--gutter);
+  padding-block: clamp(96px, 22vh, 240px) clamp(64px, 14vh, 160px);
+  text-align: center;
 }
 
 /* The one loud thing on the page. Inter wants real negative tracking at
    display sizes; the block is sized to sit just inside the column. */
-.hero {
+.hero h1 {
   margin: 0;
-  padding-block: clamp(96px, 22vh, 240px) clamp(72px, 15vh, 176px);
   font-size: clamp(2.125rem, 5.2vw, 4.75rem);
   font-weight: 500;
   line-height: 1.04;
@@ -52,56 +54,22 @@ body {
 
 /* Deterministic break at the grammatical seam; natural wrap once narrow. */
 @media (max-width: 719px) {
-  .hero br { display: none; }
+  .hero h1 br { display: none; }
 }
 
-/* No frames, no radius, no shadow: every asset is already a white-ground
-   mockup, so the page itself is the ground it floats on. */
-.work {
-  display: grid;
-  gap: clamp(16px, 5vw, 80px);
-  padding-bottom: clamp(64px, 14vh, 160px);
-}
-
-.plate { margin: 0; }
-
-.plate img,
-.plate video {
-  display: block;
-  width: 100%;
-  height: auto;
+.placeholder {
+  margin-top: clamp(48px, 11vh, 128px);
+  aspect-ratio: 16 / 9;
+  background: var(--placeholder);
 }
 </style>
 </head>
 <body>
 
-<div class="page">
-
-  <h1 class="hero">We build agentic interfaces <br>with minimalistic complexity.</h1>
-
-  <section class="work">
-    <figure class="plate">
-      <img src="assets/frida.png" width="2224" height="1300" fetchpriority="high" alt="Frida sign-in screen on iPhone">
-    </figure>
-    <figure class="plate">
-      <img src="assets/group-88.png" width="4800" height="3424" loading="lazy" decoding="async" alt="Soffo engineering workspace">
-    </figure>
-    <figure class="plate">
-      <video src="assets/website.mp4" width="1440" height="810" autoplay muted loop playsinline preload="metadata" disablepictureinpicture></video>
-    </figure>
-  </section>
-
-</div>
-
-<script>
-if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  for (const v of document.querySelectorAll('video')) {
-    v.removeAttribute('autoplay');
-    v.controls = true;
-    v.pause();
-  }
-}
-</script>
+<section class="hero">
+  <h1>We build agentic interfaces <br>with minimalistic complexity.</h1>
+  <div class="placeholder"></div>
+</section>
 
 </body>
 </html>

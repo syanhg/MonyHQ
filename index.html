@@ -20,6 +20,7 @@
   --pill-bg: #f1f1f1;
   --pill-ink: #4a4a4a;
   --placeholder: #f1f1f1;
+  --dim: #c6c6c6;
   --column: 640px;
   --section-gap: clamp(64px, 14vh, 160px);
   --radius: 14px;
@@ -224,6 +225,35 @@ section h2:last-child { margin-bottom: 0; }
 .explore svg { display: block; }
 .explore:hover { background: #e7e7e7; }
 .explore:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Justified, and lit word by word as it comes up the viewport. The base
+   colour is ink: the dim state only applies once the script has taken
+   over, so the copy is readable if it never runs. */
+.belief {
+  max-width: var(--column);
+  margin: 0 auto;
+  text-align: justify;
+  font-size: clamp(1.125rem, 1.8vw, 1.375rem);
+  line-height: 1.55;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+}
+
+/* Too narrow to justify without rivers. */
+@media (max-width: 620px) {
+  .belief { text-align: left; }
+}
+
+.belief.scroll-lit .bw {
+  color: var(--dim);
+  transition: color 260ms ease;
+}
+
+.belief.scroll-lit .bw.lit { color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .belief.scroll-lit .bw { transition: none; }
+}
 </style>
 </head>
 <body>
@@ -264,6 +294,7 @@ section h2:last-child { margin-bottom: 0; }
 
 <section class="beliefs">
   <h2>What We Believe</h2>
+  <p class="belief">We believe minimalism and complexity should not be inversely proportional. An interface should become more capable without becoming more difficult to understand. In mathematics, a simple function can produce extraordinary complexity beneath the surface. We believe interfaces should work the same way. The system can be deeply complex while the experience remains simple, intuitive, and instinctive.</p>
 </section>
 
 <script>
@@ -310,6 +341,64 @@ section h2:last-child { margin-bottom: 0; }
   h1.appendChild(out);
   document.body.style.setProperty('--n', i);
   document.body.classList.add('is-animated');
+})();
+
+(function () {
+  var belief = document.querySelector('.belief');
+  if (!belief) return;
+
+  // Spaces stay as text nodes between the spans, so justification still
+  // has something to stretch.
+  var words = [];
+  var out = document.createDocumentFragment();
+
+  for (var part of belief.textContent.split(/(\s+)/)) {
+    if (!part) continue;
+    if (/^\s+$/.test(part)) { out.appendChild(document.createTextNode(part)); continue; }
+    var w = document.createElement('span');
+    w.className = 'bw';
+    w.textContent = part;
+    out.appendChild(w);
+    words.push(w);
+  }
+
+  belief.textContent = '';
+  belief.appendChild(out);
+  belief.classList.add('scroll-lit');
+
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    for (var w2 of words) w2.classList.add('lit');
+    return;
+  }
+
+  var lit = -1;
+  var queued = false;
+
+  function paint() {
+    queued = false;
+    var r = belief.getBoundingClientRect();
+    var vh = window.innerHeight || document.documentElement.clientHeight;
+
+    // 0 when the paragraph's top sits at 85% of the viewport, 1 by the time
+    // it has risen far enough that the last line is well clear of the fold.
+    var p = (vh * 0.85 - r.top) / (vh * 0.4 + r.height);
+    p = p < 0 ? 0 : p > 1 ? 1 : p;
+
+    var n = Math.round(p * words.length);
+    if (n === lit) return;
+    for (var i = 0; i < words.length; i++) words[i].classList.toggle('lit', i < n);
+    lit = n;
+  }
+
+  function queue() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(paint);
+  }
+
+  addEventListener('scroll', queue, { passive: true });
+  addEventListener('resize', queue);
+  paint();
 })();
 </script>
 

@@ -130,7 +130,8 @@ body {
   animation-delay: calc((var(--i) + 6) * var(--step));
 }
 
-.is-animated .products {
+.is-animated .products,
+.is-animated .beliefs {
   animation: settle 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   animation-delay: calc((var(--n) + 10) * var(--step));
 }
@@ -142,14 +143,17 @@ body {
 
 /* ---- Our Products ---------------------------------------------------- */
 
-.products {
+.products,
+.beliefs {
   max-width: var(--measure);
   margin: 0 auto;
   padding-inline: var(--gutter);
-  padding-block: var(--section-gap);
 }
 
-.products h2 {
+.products { padding-block: var(--section-gap) 0; }
+.beliefs  { padding-block: var(--section-gap); }
+
+section h2 {
   margin: 0 0 var(--section-gap);
   text-align: center;
   font-size: clamp(1.125rem, 2vw, 1.5rem);
@@ -157,6 +161,8 @@ body {
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
+
+section h2:last-child { margin-bottom: 0; }
 
 /* Two across on the same column the clip sits on. */
 .product-row {
@@ -254,6 +260,10 @@ body {
       </div>
     </article>
   </div>
+</section>
+
+<section class="beliefs">
+  <h2>What We Believe</h2>
 </section>
 
 <script>

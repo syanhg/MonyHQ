@@ -168,20 +168,56 @@ body {
 }
 
 /* Both shots are white-ground mockups, so the hairline is what gives the
-   cards an edge against the paper -- same rule the clip carries. */
-.product {
+   frame an edge against the paper -- same rule the clip carries. */
+.shot {
   aspect-ratio: 2224 / 1300;
   background: var(--placeholder);
   border: 1px solid var(--hairline);
   overflow: hidden;
 }
 
-.product img {
+.shot img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: clamp(10px, 1.6vh, 14px);
+}
+
+.name {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.explore {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 6px 11px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--placeholder);
+  color: var(--ink);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  line-height: 1;
+  text-decoration: none;
+  transition: background-color 160ms ease;
+}
+
+.explore svg { display: block; }
+.explore:hover { background: #e7e7e7; }
+.explore:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 </style>
 </head>
 <body>
@@ -199,12 +235,24 @@ body {
 <section class="products">
   <h2>Products We’ve Built</h2>
   <div class="product-row">
-    <div class="product">
-      <img src="assets/fridaphoto.png" width="1000" height="585" loading="lazy" decoding="async" alt="Frida answering a question about churches in Paris on iPhone">
-    </div>
-    <div class="product">
-      <img src="assets/soffophoto.png" width="1000" height="585" loading="lazy" decoding="async" alt="Soffo engineering workspace with an agent task list">
-    </div>
+    <article class="product">
+      <div class="shot">
+        <img src="assets/fridaphoto.png" width="1000" height="585" loading="lazy" decoding="async" alt="Frida answering a question about churches in Paris on iPhone">
+      </div>
+      <div class="meta">
+        <span class="name">Frida</span>
+        <a class="explore" href="/frida" aria-label="Explore Frida">Explore <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      </div>
+    </article>
+    <article class="product">
+      <div class="shot">
+        <img src="assets/soffophoto.png" width="1000" height="585" loading="lazy" decoding="async" alt="Soffo engineering workspace with an agent task list">
+      </div>
+      <div class="meta">
+        <span class="name">Soffo</span>
+        <a class="explore" href="https://getsoffo.com/" aria-label="Explore Soffo">Explore <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      </div>
+    </article>
   </div>
 </section>
 

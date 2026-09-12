@@ -167,9 +167,20 @@ body {
   margin: 0 auto;
 }
 
+/* Both shots are white-ground mockups, so the hairline is what gives the
+   cards an edge against the paper -- same rule the clip carries. */
 .product {
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 2224 / 1300;
   background: var(--placeholder);
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+}
+
+.product img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style>
 </head>
@@ -188,8 +199,12 @@ body {
 <section class="products">
   <h2>Products We’ve Built</h2>
   <div class="product-row">
-    <div class="product"></div>
-    <div class="product"></div>
+    <div class="product">
+      <img src="assets/fridaphoto.png" width="1000" height="585" loading="lazy" decoding="async" alt="Frida answering a question about churches in Paris on iPhone">
+    </div>
+    <div class="product">
+      <img src="assets/soffophoto.png" width="1000" height="585" loading="lazy" decoding="async" alt="Soffo engineering workspace with an agent task list">
+    </div>
   </div>
 </section>
 

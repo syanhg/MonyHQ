@@ -19,6 +19,10 @@
   --hairline: #ededed;
   --pill-bg: #f1f1f1;
   --pill-ink: #4a4a4a;
+  --body-ink: #2e2e2e;
+  --art-bg: #fbfbfb;
+  --art-line: #dedede;
+  --column: 640px;
   --radius: 14px;
   --step: 18ms;
   color-scheme: light;
@@ -90,7 +94,7 @@ body {
    unreliable about clipping a video to its own border-radius. */
 .reel {
   width: 100%;
-  max-width: 640px;
+  max-width: var(--column);
   margin: clamp(40px, 9vh, 96px) auto 0;
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
@@ -131,6 +135,91 @@ body {
   animation: settle 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   animation-delay: calc((var(--n) + 6) * var(--step));
 }
+
+/* ---- Minimalistic Complexity ---------------------------------------- */
+
+.ideas {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+  padding-bottom: clamp(72px, 16vh, 176px);
+}
+
+.ideas h2 {
+  max-width: var(--column);
+  margin: 0 auto clamp(20px, 3.5vh, 32px);
+  text-align: center;
+  font-size: clamp(1.125rem, 2vw, 1.5rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.cards {
+  display: grid;
+  gap: clamp(14px, 2.5vh, 24px);
+  max-width: var(--column);
+  margin: 0 auto;
+}
+
+.card {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.card p {
+  margin: 0;
+  padding: clamp(18px, 3.5vw, 26px);
+  color: var(--body-ink);
+  font-size: 1rem;
+  line-height: 1.55;
+  letter-spacing: -0.006em;
+  text-wrap: pretty;
+}
+
+.art {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--art-bg);
+}
+
+.art .track,
+.art .surface,
+.art .mesh line { fill: none; stroke: var(--art-line); stroke-width: 1; }
+
+.art .calm,
+.art .deep use { fill: none; stroke-width: 1.4; }
+.art .calm { stroke: var(--ink); }
+.art .deep use { stroke: var(--art-line); stroke-width: 1; }
+
+.art .lens { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.art .core { fill: var(--art-line); }
+
+/* The dot is a near-zero dash with a round cap, so it rides the ring
+   exactly. pathLength normalises every ring to 100 units, which makes
+   the loop seamless whatever the geometry. */
+.art .orbiter {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 99.9;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .art .orbiter { animation: orbit var(--dur) linear infinite; animation-delay: var(--delay, 0s); }
+  .art .calm { animation: drift 30s linear infinite; }
+  .art .deep use { animation: drift var(--dur) linear infinite; }
+  .art .mesh { transform-box: view-box; transform-origin: 320px 140px; }
+  .art .mesh.a { animation: turn 48s linear infinite; }
+  .art .mesh.b { animation: turn 34s linear infinite reverse; }
+}
+
+@keyframes orbit { to { stroke-dashoffset: -100; } }
+@keyframes drift { to { transform: translateX(-160px); } }
+@keyframes turn  { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -142,6 +231,120 @@ body {
   <h1>We build agentic interfaces <br>with minimalistic complexity</h1>
   <div class="reel">
     <video src="assets/frida2.mp4" width="1846" height="1078" autoplay muted loop playsinline preload="metadata" disablepictureinpicture></video>
+  </div>
+</section>
+
+<section class="ideas">
+  <h2>Minimalistic Complexity</h2>
+  <div class="cards">
+    <article class="card">
+      <svg class="art" viewBox="0 0 640 280" role="img" aria-label="Three nested orbits turning at different speeds">
+        <path class="track" d="M 232,140 A 88,25 0 1,0 408,140 A 88,25 0 1,0 232,140"/>
+        <path class="track" d="M 172,140 A 148,42 0 1,0 468,140 A 148,42 0 1,0 172,140"/>
+        <path class="track" d="M 112,140 A 208,59 0 1,0 528,140 A 208,59 0 1,0 112,140"/>
+        <path class="orbiter" style="--delay:0s;--dur:17s" pathLength="100" d="M 232,140 A 88,25 0 1,0 408,140 A 88,25 0 1,0 232,140"/>
+        <path class="orbiter" style="--delay:-6s;--dur:25s" pathLength="100" d="M 172,140 A 148,42 0 1,0 468,140 A 148,42 0 1,0 172,140"/>
+        <path class="orbiter" style="--delay:-14s;--dur:34s" pathLength="100" d="M 112,140 A 208,59 0 1,0 528,140 A 208,59 0 1,0 112,140"/>
+        <circle class="core" cx="320" cy="140" r="7"/>
+      </svg>
+      <p>We believe richness and complexity should not be inversely proportional. An interface should become more capable without becoming more difficult to understand.</p>
+    </article>
+    <article class="card">
+      <svg class="art" viewBox="0 0 640 280" role="img" aria-label="A single wave above a surface, repeated into interference below it">
+        <defs><path id="fn" d="M -640,0.00 L -630,7.65 L -620,14.14 L -610,18.48 L -600,20.00 L -590,18.48 L -580,14.14 L -570,7.65 L -560,-0.00 L -550,-7.65 L -540,-14.14 L -530,-18.48 L -520,-20.00 L -510,-18.48 L -500,-14.14 L -490,-7.65 L -480,0.00 L -470,7.65 L -460,14.14 L -450,18.48 L -440,20.00 L -430,18.48 L -420,14.14 L -410,7.65 L -400,-0.00 L -390,-7.65 L -380,-14.14 L -370,-18.48 L -360,-20.00 L -350,-18.48 L -340,-14.14 L -330,-7.65 L -320,0.00 L -310,7.65 L -300,14.14 L -290,18.48 L -280,20.00 L -270,18.48 L -260,14.14 L -250,7.65 L -240,-0.00 L -230,-7.65 L -220,-14.14 L -210,-18.48 L -200,-20.00 L -190,-18.48 L -180,-14.14 L -170,-7.65 L -160,0.00 L -150,7.65 L -140,14.14 L -130,18.48 L -120,20.00 L -110,18.48 L -100,14.14 L -90,7.65 L -80,-0.00 L -70,-7.65 L -60,-14.14 L -50,-18.48 L -40,-20.00 L -30,-18.48 L -20,-14.14 L -10,-7.65 L 0,0.00 L 10,7.65 L 20,14.14 L 30,18.48 L 40,20.00 L 50,18.48 L 60,14.14 L 70,7.65 L 80,0.00 L 90,-7.65 L 100,-14.14 L 110,-18.48 L 120,-20.00 L 130,-18.48 L 140,-14.14 L 150,-7.65 L 160,-0.00 L 170,7.65 L 180,14.14 L 190,18.48 L 200,20.00 L 210,18.48 L 220,14.14 L 230,7.65 L 240,0.00 L 250,-7.65 L 260,-14.14 L 270,-18.48 L 280,-20.00 L 290,-18.48 L 300,-14.14 L 310,-7.65 L 320,-0.00 L 330,7.65 L 340,14.14 L 350,18.48 L 360,20.00 L 370,18.48 L 380,14.14 L 390,7.65 L 400,0.00 L 410,-7.65 L 420,-14.14 L 430,-18.48 L 440,-20.00 L 450,-18.48 L 460,-14.14 L 470,-7.65 L 480,-0.00 L 490,7.65 L 500,14.14 L 510,18.48 L 520,20.00 L 530,18.48 L 540,14.14 L 550,7.65 L 560,0.00 L 570,-7.65 L 580,-14.14 L 590,-18.48 L 600,-20.00 L 610,-18.48 L 620,-14.14 L 630,-7.65 L 640,-0.00 L 650,7.65 L 660,14.14 L 670,18.48 L 680,20.00 L 690,18.48 L 700,14.14 L 710,7.65 L 720,0.00 L 730,-7.65 L 740,-14.14 L 750,-18.48 L 760,-20.00 L 770,-18.48 L 780,-14.14 L 790,-7.65 L 800,-0.00 L 810,7.65 L 820,14.14 L 830,18.48 L 840,20.00 L 850,18.48 L 860,14.14 L 870,7.65 L 880,-0.00 L 890,-7.65 L 900,-14.14 L 910,-18.48 L 920,-20.00 L 930,-18.48 L 940,-14.14 L 950,-7.65 L 960,-0.00 L 970,7.65 L 980,14.14 L 990,18.48 L 1000,20.00 L 1010,18.48 L 1020,14.14 L 1030,7.65 L 1040,0.00 L 1050,-7.65 L 1060,-14.14 L 1070,-18.48 L 1080,-20.00 L 1090,-18.48 L 1100,-14.14 L 1110,-7.65 L 1120,-0.00 L 1130,7.65 L 1140,14.14 L 1150,18.48 L 1160,20.00 L 1170,18.48 L 1180,14.14 L 1190,7.65 L 1200,0.00 L 1210,-7.65 L 1220,-14.14 L 1230,-18.48 L 1240,-20.00 L 1250,-18.48 L 1260,-14.14 L 1270,-7.65 L 1280,-0.00"/></defs>
+        <use class="calm" href="#fn" y="58"/>
+        <line class="surface" x1="0" y1="112" x2="640" y2="112"/>
+        <g class="deep">
+          <use href="#fn" y="128" style="--dur:13.0s" opacity="0.34"/>
+          <use href="#fn" y="137" style="--dur:14.6s" opacity="0.37"/>
+          <use href="#fn" y="146" style="--dur:16.2s" opacity="0.40"/>
+          <use href="#fn" y="155" style="--dur:17.8s" opacity="0.43"/>
+          <use href="#fn" y="164" style="--dur:19.4s" opacity="0.47"/>
+          <use href="#fn" y="173" style="--dur:21.0s" opacity="0.50"/>
+          <use href="#fn" y="182" style="--dur:22.6s" opacity="0.53"/>
+          <use href="#fn" y="191" style="--dur:24.2s" opacity="0.56"/>
+          <use href="#fn" y="200" style="--dur:25.8s" opacity="0.59"/>
+          <use href="#fn" y="209" style="--dur:27.4s" opacity="0.62"/>
+          <use href="#fn" y="218" style="--dur:29.0s" opacity="0.65"/>
+          <use href="#fn" y="227" style="--dur:30.6s" opacity="0.68"/>
+          <use href="#fn" y="236" style="--dur:32.2s" opacity="0.72"/>
+          <use href="#fn" y="245" style="--dur:33.8s" opacity="0.75"/>
+          <use href="#fn" y="254" style="--dur:35.4s" opacity="0.78"/>
+          <use href="#fn" y="263" style="--dur:37.0s" opacity="0.81"/>
+          <use href="#fn" y="272" style="--dur:38.6s" opacity="0.84"/>
+        </g>
+      </svg>
+      <p>In mathematics, a simple function can produce extraordinary complexity beneath the surface. We believe interfaces should work the same way.</p>
+    </article>
+    <article class="card">
+      <svg class="art" viewBox="0 0 640 280" role="img" aria-label="A plain circle whose interior is a slowly shifting lattice">
+        <defs><clipPath id="lens"><circle cx="320" cy="140" r="96"/></clipPath></defs>
+        <g clip-path="url(#lens)">
+          <g class="mesh a">
+            <line x1="184" y1="0" x2="184" y2="280"/>
+            <line x1="194" y1="0" x2="194" y2="280"/>
+            <line x1="204" y1="0" x2="204" y2="280"/>
+            <line x1="214" y1="0" x2="214" y2="280"/>
+            <line x1="224" y1="0" x2="224" y2="280"/>
+            <line x1="234" y1="0" x2="234" y2="280"/>
+            <line x1="244" y1="0" x2="244" y2="280"/>
+            <line x1="254" y1="0" x2="254" y2="280"/>
+            <line x1="264" y1="0" x2="264" y2="280"/>
+            <line x1="274" y1="0" x2="274" y2="280"/>
+            <line x1="284" y1="0" x2="284" y2="280"/>
+            <line x1="294" y1="0" x2="294" y2="280"/>
+            <line x1="304" y1="0" x2="304" y2="280"/>
+            <line x1="314" y1="0" x2="314" y2="280"/>
+            <line x1="324" y1="0" x2="324" y2="280"/>
+            <line x1="334" y1="0" x2="334" y2="280"/>
+            <line x1="344" y1="0" x2="344" y2="280"/>
+            <line x1="354" y1="0" x2="354" y2="280"/>
+            <line x1="364" y1="0" x2="364" y2="280"/>
+            <line x1="374" y1="0" x2="374" y2="280"/>
+            <line x1="384" y1="0" x2="384" y2="280"/>
+            <line x1="394" y1="0" x2="394" y2="280"/>
+            <line x1="404" y1="0" x2="404" y2="280"/>
+            <line x1="414" y1="0" x2="414" y2="280"/>
+            <line x1="424" y1="0" x2="424" y2="280"/>
+            <line x1="434" y1="0" x2="434" y2="280"/>
+            <line x1="444" y1="0" x2="444" y2="280"/>
+            <line x1="454" y1="0" x2="454" y2="280"/>
+          </g>
+          <g transform="rotate(90 320 140)"><g class="mesh b">
+            <line x1="184" y1="0" x2="184" y2="280"/>
+            <line x1="194" y1="0" x2="194" y2="280"/>
+            <line x1="204" y1="0" x2="204" y2="280"/>
+            <line x1="214" y1="0" x2="214" y2="280"/>
+            <line x1="224" y1="0" x2="224" y2="280"/>
+            <line x1="234" y1="0" x2="234" y2="280"/>
+            <line x1="244" y1="0" x2="244" y2="280"/>
+            <line x1="254" y1="0" x2="254" y2="280"/>
+            <line x1="264" y1="0" x2="264" y2="280"/>
+            <line x1="274" y1="0" x2="274" y2="280"/>
+            <line x1="284" y1="0" x2="284" y2="280"/>
+            <line x1="294" y1="0" x2="294" y2="280"/>
+            <line x1="304" y1="0" x2="304" y2="280"/>
+            <line x1="314" y1="0" x2="314" y2="280"/>
+            <line x1="324" y1="0" x2="324" y2="280"/>
+            <line x1="334" y1="0" x2="334" y2="280"/>
+            <line x1="344" y1="0" x2="344" y2="280"/>
+            <line x1="354" y1="0" x2="354" y2="280"/>
+            <line x1="364" y1="0" x2="364" y2="280"/>
+            <line x1="374" y1="0" x2="374" y2="280"/>
+            <line x1="384" y1="0" x2="384" y2="280"/>
+            <line x1="394" y1="0" x2="394" y2="280"/>
+            <line x1="404" y1="0" x2="404" y2="280"/>
+            <line x1="414" y1="0" x2="414" y2="280"/>
+            <line x1="424" y1="0" x2="424" y2="280"/>
+            <line x1="434" y1="0" x2="434" y2="280"/>
+            <line x1="444" y1="0" x2="444" y2="280"/>
+            <line x1="454" y1="0" x2="454" y2="280"/>
+          </g></g>
+        </g>
+        <circle class="lens" cx="320" cy="140" r="96"/>
+      </svg>
+      <p>The system can be deeply complex while the experience remains simple, intuitive, and instinctive.</p>
+    </article>
   </div>
 </section>
 

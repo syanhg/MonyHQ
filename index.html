@@ -225,18 +225,17 @@ body {
   line-height: 1;
 }
 
-/* Inter wants real negative tracking even at this size. */
+/* Inter wants real negative tracking even at this size. Always two rows,
+   broken at the grammatical seam: the longer row runs up to 19.1em (Inter
+   widens at small optical sizes), so on narrow screens the size follows
+   the column instead of wrapping. */
 .hero h1 {
   margin: 0;
-  font-size: clamp(1.375rem, 2.8vw, 2.375rem);
+  font-size: min(clamp(1.375rem, 2.8vw, 2.375rem), calc((100vw - 2 * var(--gutter)) / 19.5));
   font-weight: 500;
   line-height: 1.04;
   letter-spacing: -0.025em;
-}
-
-/* Deterministic break at the grammatical seam; natural wrap once narrow. */
-@media (max-width: 719px) {
-  .hero h1 br { display: none; }
+  white-space: nowrap;
 }
 
 /* Well short of the column, so it reads as a clip sitting on the page
@@ -258,7 +257,7 @@ body {
 }
 
 /* One page-load sequence: the line resolves letter by letter, then the
-   clip settles in behind it. Split into words so wrapping still works. */
+   clip settles in behind it. */
 .hero h1 .w { display: inline-block; white-space: nowrap; }
 .hero h1 .c { display: inline-block; }
 
@@ -525,6 +524,13 @@ footer {
       out.appendChild(word);
     }
   }
+
+  // Safari can leave a finished blur baked into some letters' layers. The
+  // end state matches the resting style, so drop each animation once it has
+  // run and let the element repaint as plain text.
+  document.addEventListener('animationend', function (e) {
+    if (e.animationName === 'settle') e.target.style.animation = 'none';
+  });
 
   h1.textContent = '';
   h1.appendChild(out);

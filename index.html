@@ -461,11 +461,43 @@ section h2:last-child { margin-bottom: 0; }
 footer {
   padding-inline: var(--gutter);
   padding-bottom: clamp(32px, 6vh, 56px);
-  text-align: center;
   font-size: 0.8125rem;
   letter-spacing: -0.005em;
   color: var(--quiet-ink);
 }
+
+/* On the wordmark's column, so the line starts under the M and the links
+   end under the y. On a phone the links drop below, still flush left. */
+.colophon {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px 24px;
+  max-width: var(--column);
+  margin: 0 auto;
+}
+
+.colophon p { margin: 0; }
+
+.elsewhere {
+  display: flex;
+  gap: 20px;
+}
+
+.elsewhere a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: inherit;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.elsewhere svg { display: block; transition: transform 160ms ease; }
+.elsewhere a:hover { color: var(--ink); }
+.elsewhere a:hover svg { transform: translate(1px, -1px); }
+.elsewhere a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 2px; }
 
 /* On the clip's column, and a container so the letters can size to its
    width rather than the window's, which would count a scrollbar. The goo
@@ -582,7 +614,14 @@ footer {
 
 <footer>
   <div class="wordmark" aria-hidden="true"><span><span>M</span><span>o</span><span>n</span><span>y</span> <span>C</span><span>o</span><span>m</span><span>p</span><span>a</span><span>n</span><span>y</span></span></div>
-  © 2026 MonyCompany Inc. All rights reserved.
+  <div class="colophon">
+    <p>© 2026 MonyCompany Inc. All rights reserved.</p>
+    <nav class="elsewhere" aria-label="Elsewhere">
+      <a href="https://www.linkedin.com/company/monyinc" target="_blank" rel="noopener noreferrer">LinkedIn <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="https://x.com/monycompany" target="_blank" rel="noopener noreferrer">X (Twitter) <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a href="mailto:alex@mony.company">Email <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </nav>
+  </div>
   <svg class="goo" aria-hidden="true" focusable="false">
     <filter id="goo" x="-5%" y="-40%" width="110%" height="180%" color-interpolation-filters="sRGB">
       <feGaussianBlur stdDeviation="5"/>

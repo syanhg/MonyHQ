@@ -17,18 +17,19 @@
   --gutter: clamp(24px, 6vw, 96px);
   --measure: 1360px;
   --hairline: #ededed;
-  --pill-bg: #f1f1f1;
-  --pill-ink: #4a4a4a;
+  --quiet-ink: #4a4a4a;
+  --lede-ink: #767676;
+  --wordmark: #ebebeb;
   --placeholder: #f1f1f1;
-  --column: 640px;
+  --column: 960px;
   --section-gap: clamp(64px, 14vh, 160px);
   --radius: 14px;
   --step: 18ms;
-  --contact-bg: #423d3a;
-  --contact-bg-hover: #2f2b29;
-  --contact-ink: #fbf3ee;
-  --key-bg: #a69d9a;
-  --key-ink: #423d3a;
+  --contact-bg: #5a5a5a;
+  --contact-bg-hover: #474747;
+  --contact-ink: #fafafa;
+  --key-bg: #b3b3b3;
+  --key-ink: #474747;
   color-scheme: light;
 }
 
@@ -210,32 +211,28 @@ body {
   text-align: center;
 }
 
-/* Quiet announcement above the line: grey enough to sit behind the
-   headline, dark enough to stay legible on its own ground. */
-.pill {
-  display: inline-block;
-  margin: 0 0 clamp(12px, 2vh, 18px);
-  padding: 7px 12px;
-  border-radius: 5px;
-  background: var(--pill-bg);
-  color: var(--pill-ink);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  line-height: 1;
-}
-
-/* Inter wants real negative tracking even at this size. Always two rows,
-   broken at the grammatical seam: the longer row runs up to 19.1em (Inter
-   widens at small optical sizes), so on narrow screens the size follows
-   the column instead of wrapping. */
+/* Inter wants real negative tracking even at this size. Always one row:
+   the line runs up to 17.4em (Inter widens at small optical sizes), so on
+   narrow screens the size follows the column instead of wrapping. */
 .hero h1 {
   margin: 0;
-  font-size: min(clamp(1.375rem, 2.8vw, 2.375rem), calc((100vw - 2 * var(--gutter)) / 19.5));
+  font-size: min(clamp(1.375rem, 2.8vw, 2.375rem), calc((100vw - 2 * var(--gutter)) / 17.8));
   font-weight: 500;
   line-height: 1.04;
   letter-spacing: -0.025em;
   white-space: nowrap;
+}
+
+/* Light enough to sit behind the headline, still dark enough to read on
+   white (4.5:1). Free to wrap on phones, so balance the rows. */
+.lede {
+  margin: clamp(10px, 1.6vh, 16px) 0 0;
+  color: var(--lede-ink);
+  font-size: clamp(0.9375rem, 1.3vw, 1.125rem);
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
 /* Well short of the column, so it reads as a clip sitting on the page
@@ -257,7 +254,7 @@ body {
 }
 
 /* One page-load sequence: the line resolves letter by letter, then the
-   clip settles in behind it. */
+   description and the clip settle in behind it. */
 .hero h1 .w { display: inline-block; white-space: nowrap; }
 .hero h1 .c { display: inline-block; }
 
@@ -270,25 +267,93 @@ body {
   animation: settle 620ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
-.is-animated .pill {
-  animation: settle 620ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  animation-delay: calc(2 * var(--step));
-}
-
 .is-animated .hero h1 .c {
   animation: settle 620ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   animation-delay: calc((var(--i) + 6) * var(--step));
 }
 
+.is-animated .showcase,
 .is-animated .products,
 .is-animated footer {
   animation: settle 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   animation-delay: calc((var(--n) + 10) * var(--step));
 }
 
+.is-animated .lede {
+  animation: settle 620ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation-delay: calc((var(--n) + 4) * var(--step));
+}
+
 .is-animated .reel {
   animation: settle 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   animation-delay: calc((var(--n) + 6) * var(--step));
+}
+
+/* ---- Highlights ------------------------------------------------------ */
+
+.showcase {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+  padding-top: var(--section-gap);
+}
+
+/* Three across on the same column the clip sits on. */
+.art-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(12px, 2.5vw, 20px);
+  max-width: var(--column);
+  margin: 0 auto;
+}
+
+.art-row figure { margin: 0; }
+
+/* Framed like the clip: white ground, the same hairline, the same radius. */
+.art {
+  aspect-ratio: 1;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.art canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Each caption is the same length, sized to sit in three rows at most. */
+.art-caption {
+  margin: clamp(10px, 1.6vh, 14px) 0 0;
+  color: var(--lede-ink);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
+}
+
+.art-caption strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* Three across only while a card is wide enough (290px) to keep its
+   caption to three rows. Below that, one under another on a narrower
+   column, wider than tall so the stack doesn't run on. */
+@media (max-width: 1079px) {
+  .art-row {
+    grid-template-columns: 1fr;
+    max-width: 520px;
+    gap: 28px;
+  }
+
+  .art { aspect-ratio: 3 / 2; }
+}
+
+/* The narrowest phones need a step down to stay within three rows. */
+@media (max-width: 359px) {
+  .art-caption { font-size: 0.8125rem; }
 }
 
 /* ---- Our Products ---------------------------------------------------- */
@@ -310,6 +375,27 @@ section h2 {
 }
 
 section h2:last-child { margin-bottom: 0; }
+
+/* A heading with a line under it: the pair keeps the gap below, and the
+   line speaks in the same voice as the one under the headline. */
+.section-head {
+  margin: 0 0 var(--section-gap);
+  text-align: center;
+}
+
+.section-head h2 {
+  margin: 0;
+  text-wrap: balance;
+}
+
+.section-head p {
+  margin: clamp(8px, 1.2vh, 12px) 0 0;
+  color: var(--lede-ink);
+  font-size: clamp(0.9375rem, 1.3vw, 1.125rem);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
 
 /* Two across on the same column the clip sits on. */
 .product-row {
@@ -378,7 +464,47 @@ footer {
   text-align: center;
   font-size: 0.8125rem;
   letter-spacing: -0.005em;
-  color: var(--pill-ink);
+  color: var(--quiet-ink);
+}
+
+/* On the clip's column, and a container so the letters can size to its
+   width rather than the window's, which would count a scrollbar. The goo
+   filter rounds the letters, and fuses neighbours wherever they touch. */
+.wordmark {
+  position: relative;
+  container-type: inline-size;
+  max-width: var(--column);
+  margin: 0 auto clamp(16px, 3vh, 28px);
+  color: var(--wordmark);
+  filter: url(#goo);
+}
+
+/* Measured in Inter at this weight and tracking, letter by letter (each
+   its own box, so no kerning between them), the ink runs 6.576em and starts
+   0.06em in. The goo wears a little off the tail of the last y, so on screen
+   it runs 6.556em: this size and the pull to the left put it flush with
+   both edges of the column. */
+.wordmark > span {
+  display: block;
+  margin-left: -0.06em;
+  font-size: calc(min(100vw - 2 * var(--gutter), var(--column)) / 6.62);
+  font-size: calc(100cqi / 6.556);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* Each letter widens about its own centre. */
+.wordmark span span {
+  display: inline-block;
+}
+
+.goo {
+  position: absolute;
+  width: 0;
+  height: 0;
 }
 </style>
 </head>
@@ -399,15 +525,39 @@ footer {
 </header>
 
 <section class="hero">
-  <div class="pill">Frida TestFlight Access</div>
-  <h1>An agentic interface that moves <br>with the ease and rhythm of flowing water</h1>
+  <h1>The Interface for AI Agents and People</h1>
+  <p class="lede">An intuitive, non-deterministic interface built for consumers</p>
   <div class="reel">
     <video src="assets/frida.mp4" width="1280" height="720" autoplay muted loop playsinline preload="metadata" disablepictureinpicture></video>
   </div>
 </section>
 
+<section class="showcase" aria-labelledby="idea">
+  <header class="section-head">
+    <h2 id="idea">What We Mean by Minimalistic Complexity</h2>
+    <p>Not making the system simple, but making its complexity effortless to interact with.</p>
+  </header>
+  <div class="art-row">
+    <figure>
+      <div class="art"><canvas data-art="ripple" role="img" aria-label="A row of soft charcoal drops on a travelling wave, running together into a bar and parting into beads"></canvas></div>
+      <figcaption class="art-caption"><strong>Less machines, more water.</strong> Water never asks you to learn its shape first. It finds a way through, and so should good software.</figcaption>
+    </figure>
+    <figure>
+      <div class="art"><canvas data-art="bounce" role="img" aria-label="A drop bouncing on a soft bar, squashing into it on landing and pulling free on a thread"></canvas></div>
+      <figcaption class="art-caption"><strong>Complexity you never feel.</strong> Dozens of agents and tools work out of sight, and none of their weight reaches the person using it.</figcaption>
+    </figure>
+    <figure>
+      <div class="art"><canvas data-art="ring" role="img" aria-label="Eight drops on a turning circle that close into one rippling loop, then drift apart"></canvas></div>
+      <figcaption class="art-caption"><strong>Less thinking, same depth.</strong> We never reduce what products can do, only how much users think about the way they work.</figcaption>
+    </figure>
+  </div>
+</section>
+
 <section class="products">
-  <h2>Products We’ve Built</h2>
+  <header class="section-head">
+    <h2>Two Products, Built on the Same Idea</h2>
+    <p>Frida for everyday questions, Soffo for engineering, with every agent out of sight.</p>
+  </header>
   <div class="product-row">
     <article class="product">
       <div class="shot">
@@ -430,7 +580,16 @@ footer {
   </div>
 </section>
 
-<footer>© 2026 MonyCompany Inc. All rights reserved.</footer>
+<footer>
+  <div class="wordmark" aria-hidden="true"><span><span>M</span><span>o</span><span>n</span><span>y</span> <span>C</span><span>o</span><span>m</span><span>p</span><span>a</span><span>n</span><span>y</span></span></div>
+  © 2026 MonyCompany Inc. All rights reserved.
+  <svg class="goo" aria-hidden="true" focusable="false">
+    <filter id="goo" x="-5%" y="-40%" width="110%" height="180%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="5"/>
+      <feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 30 -14"/>
+    </filter>
+  </svg>
+</footer>
 
 <script>
 (function () {
@@ -536,6 +695,354 @@ footer {
   h1.appendChild(out);
   document.body.style.setProperty('--n', i);
   document.body.classList.add('is-animated');
+})();
+
+(function () {
+  var show = document.querySelector('.showcase');
+  if (!show) return;
+
+  var row = show.querySelector('.art-row');
+  var canvases = Array.prototype.slice.call(row.querySelectorAll('canvas[data-art]'));
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---- Drawing ----
+
+  // Every piece is the same material: soft charcoal, darker toward its
+  // core, drawn as one smoothed field so shapes neck and part like a liquid
+  // instead of overlapping. Lengths are in tenths of the card's height.
+  var EDGE = [71, 71, 71];
+  var CORE = [53, 53, 53];
+  var MAX = 8;
+
+  var VERT = 'attribute vec2 p; void main() { gl_Position = vec4(p, 0.0, 1.0); }';
+
+  // Each shape is a capsule: a segment with a radius (a circle when its two
+  // ends meet). The smooth minimum is what lets neighbours reach for each
+  // other across a gap of up to uGoo. It also flattens the field where they
+  // join, so given derivatives the edge is measured against the field's own
+  // slope on screen; a fixed width would smear every thin neck.
+  function frag(slope) {
+    return [
+      slope ? '#extension GL_OES_standard_derivatives : enable' : '',
+      '#ifdef GL_FRAGMENT_PRECISION_HIGH',
+      'precision highp float;',
+      '#else',
+      'precision mediump float;',
+      '#endif',
+      'uniform vec2 uRes;',
+      'uniform float uUnit;',
+      'uniform float uGoo;',
+      'uniform vec4 uSeg[' + MAX + '];',
+      'uniform float uRad[' + MAX + '];',
+      'uniform int uCount;',
+      'uniform vec3 uEdge;',
+      'uniform vec3 uCore;',
+      'void main() {',
+      '  vec2 p = (gl_FragCoord.xy - 0.5 * uRes) / uUnit;',
+      '  float d = 1e3;',
+      '  for (int i = 0; i < ' + MAX + '; i++) {',
+      '    if (i >= uCount) break;',
+      '    vec2 pa = p - uSeg[i].xy;',
+      '    vec2 ba = uSeg[i].zw - uSeg[i].xy;',
+      '    float t = clamp(dot(pa, ba) / max(dot(ba, ba), 1e-5), 0.0, 1.0);',
+      '    float e = length(pa - ba * t) - uRad[i];',
+      '    float h = max(uGoo - abs(d - e), 0.0) / uGoo;',
+      '    d = min(d, e) - h * h * uGoo * 0.25;',
+      '  }',
+      slope
+        ? '  float a = clamp(0.5 - d / max(length(vec2(dFdx(d), dFdy(d))), 1e-5), 0.0, 1.0);'
+        : '  float a = clamp(0.5 - d * uUnit, 0.0, 1.0);',
+      '  vec3 c = mix(uEdge, uCore, 1.0 - exp(-max(-d, 0.0) / 0.62));',
+      '  gl_FragColor = vec4(c * a, a);',
+      '}'
+    ].join('\n');
+  }
+
+  function stage(canvas) {
+    var gl = canvas.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: true });
+    if (!gl) return null;
+
+    function part(type, source) {
+      var s = gl.createShader(type);
+      gl.shaderSource(s, source);
+      gl.compileShader(s);
+      return s;
+    }
+
+    var program = gl.createProgram();
+    gl.attachShader(program, part(gl.VERTEX_SHADER, VERT));
+    gl.attachShader(program, part(gl.FRAGMENT_SHADER, frag(!!gl.getExtension('OES_standard_derivatives'))));
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return null;
+    gl.useProgram(program);
+
+    // One triangle that covers the whole canvas.
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    var at = gl.getAttribLocation(program, 'p');
+    gl.enableVertexAttribArray(at);
+    gl.vertexAttribPointer(at, 2, gl.FLOAT, false, 0, 0);
+
+    var u = {};
+    ['uRes', 'uUnit', 'uGoo', 'uSeg', 'uRad', 'uCount', 'uEdge', 'uCore'].forEach(function (name) {
+      u[name] = gl.getUniformLocation(program, name);
+    });
+    gl.uniform3f(u.uEdge, EDGE[0] / 255, EDGE[1] / 255, EDGE[2] / 255);
+    gl.uniform3f(u.uCore, CORE[0] / 255, CORE[1] / 255, CORE[2] / 255);
+
+    return { gl: gl, u: u, seg: new Float32Array(MAX * 4), rad: new Float32Array(MAX) };
+  }
+
+  // Eases between [time, value] keys, holding the first and last values
+  // outside them. In-out cubic throughout: slow to leave, quick through the
+  // middle, slow to land.
+  function key(t, keys) {
+    if (t <= keys[0][0]) return keys[0][1];
+    for (var i = 1; i < keys.length; i++) {
+      if (t < keys[i][0]) {
+        var a = keys[i - 1], b = keys[i];
+        var x = (t - a[0]) / (b[0] - a[0]);
+        x = x < 0.5 ? 4 * x * x * x : 1 - Math.pow(2 - 2 * x, 3) / 2;
+        return a[1] + (b[1] - a[1]) * x;
+      }
+    }
+    return keys[keys.length - 1][1];
+  }
+
+  function drop(x, y, r) { return [x, y, x, y, r]; }
+
+  // 1. Ripple: a row of drops on a slow travelling wave. While the wave is
+  // low they run together into one soft bar; as it builds, the steep
+  // stretches pull apart into beads and the low points gather the most.
+  function ripple(t) {
+    var swell = 0.25 + 0.75 * (0.5 - 0.5 * Math.cos(t * 0.55));
+    var shapes = [];
+    for (var i = 0; i < 7; i++) {
+      var edge = Math.abs(i - 3) / 3;
+      var phase = t * 1.7 - i * 1.2;
+      var y = Math.sin(phase) * swell * (1 - 0.3 * edge * edge);
+      var r = (0.48 - 0.1 * Math.sin(phase) * swell) * (1 - 0.12 * edge);
+      shapes.push(drop((i - 3) * 1.1, y, r));
+    }
+    return shapes;
+  }
+
+  // 2. Bounce: a drop bouncing on a soft bar. On landing it squashes and
+  // sinks in while the bar gives under it; leaving, it pulls free on a
+  // thread, and it stretches a little where it falls fastest. The bar is
+  // one capsule: two meeting under the drop would swell where they join.
+  function bounce(t) {
+    var c = t % 1.6;
+    var floor = -1.8, rest = -0.8;
+    var y = rest, wide = 0, tall = 0, r = 0.7, dip = 0;
+    if (c < 0.22) {
+      var q = Math.sin(Math.PI * c / 0.22);
+      y = rest - 0.28 * q;
+      wide = 0.32 * q;
+      r = 0.7 - 0.06 * q;
+      dip = 0.18 * q;
+    } else {
+      var f = (c - 0.22) / 1.38;
+      y = rest + 9.6 * f * (1 - f);
+      tall = 0.18 * Math.abs(1 - 2 * f) * Math.min(1, 8 * Math.min(f, 1 - f));
+    }
+    return [
+      [-1.8, floor - dip, 1.8, floor - dip, 0.3],
+      [-wide, y - tall, wide, y + tall, r]
+    ];
+  }
+
+  // 3. Ring: eight drops round a slowly turning circle. They draw in until
+  // they close into one loop, which ripples round on itself before it lets
+  // go and the drops drift back out. Alternate drops move a beat apart, so
+  // the loop closes and opens in a stagger.
+  function ring(t) {
+    var c = t % 7;
+    var even = key(c, [[1.2, 0], [2.1, 1], [4.6, 1], [5.5, 0]]);
+    var odd = key(c, [[1.4, 0], [2.3, 1], [4.8, 1], [5.7, 0]]);
+    var shapes = [];
+    for (var i = 0; i < 8; i++) {
+      var k = i % 2 ? odd : even;
+      var a = t * 0.25 + i * Math.PI / 4;
+      var wobble = 0.06 * Math.sin(3 * a - t * 2.2) * Math.min(even, odd);
+      var R = 2.2 - 0.65 * k + wobble;
+      shapes.push(drop(Math.cos(a) * R, Math.sin(a) * R, 0.42 + 0.08 * k + wobble * 0.5));
+    }
+    return shapes;
+  }
+
+  function render(view) {
+    var s = view.stage;
+    if (!s || !view.canvas.width) return;
+    var gl = s.gl;
+    var shapes = view.scene(view.clock);
+    var n = 0;
+
+    // A shape with next to no radius would still pull a speck out of its
+    // neighbours, so it sits the frame out.
+    shapes.forEach(function (q) {
+      if (q[4] <= 0.02 || n === MAX) return;
+      s.seg[n * 4] = q[0];
+      s.seg[n * 4 + 1] = q[1];
+      s.seg[n * 4 + 2] = q[2];
+      s.seg[n * 4 + 3] = q[3];
+      s.rad[n] = q[4];
+      n++;
+    });
+
+    gl.viewport(0, 0, view.canvas.width, view.canvas.height);
+    gl.uniform2f(s.u.uRes, view.canvas.width, view.canvas.height);
+    gl.uniform1f(s.u.uUnit, view.canvas.height / 10);
+    gl.uniform1f(s.u.uGoo, 1);
+    gl.uniform4fv(s.u.uSeg, s.seg);
+    gl.uniform1fv(s.u.uRad, s.rad);
+    gl.uniform1i(s.u.uCount, n);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  // ---- Running ----
+
+  var SCENES = { ripple: ripple, bounce: bounce, ring: ring };
+  var views = canvases.map(function (canvas) {
+    return { canvas: canvas, stage: stage(canvas), scene: SCENES[canvas.getAttribute('data-art')], clock: 0 };
+  });
+
+  // Held still, each rests mid-gesture: the row beading, the drop pulling
+  // free, the loop closed.
+  if (still) { views[0].clock = 4; views[1].clock = 0.32; views[2].clock = 3.4; }
+
+  function fit() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    views.forEach(function (view) {
+      view.canvas.width = Math.round(view.canvas.clientWidth * dpr);
+      view.canvas.height = Math.round(view.canvas.clientHeight * dpr);
+      render(view);
+    });
+  }
+
+  // They only run while the row is on screen, and each clock stops with
+  // it, so a piece picks up where it was left.
+  var running = false;
+  var raf = 0;
+  var then = 0;
+
+  function frame(now) {
+    raf = 0;
+    var dt = then ? Math.min((now - then) / 1000, 1 / 20) : 0;
+    then = now;
+    views.forEach(function (view) {
+      view.clock += dt;
+      render(view);
+    });
+    if (running) raf = requestAnimationFrame(frame);
+  }
+
+  function run(on) {
+    running = on && !still;
+    if (running && !raf) { then = 0; raf = requestAnimationFrame(frame); }
+  }
+
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(row);
+  else { fit(); window.addEventListener('resize', fit); }
+
+  if (window.IntersectionObserver) {
+    new IntersectionObserver(function (entries) { run(entries[0].isIntersecting); }).observe(show);
+  } else run(true);
+})();
+
+(function () {
+  var mark = document.querySelector('.wordmark');
+  var blur = document.querySelector('#goo feGaussianBlur');
+  if (!mark || !blur) return;
+
+  var word = mark.querySelector('span');
+  var letters = Array.prototype.slice.call(word.querySelectorAll('span'));
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // In em of the letters, so it holds at any width. The blur sets how soft
+  // the goo is: loose, the letters are only a few beads; at rest, just
+  // rounded enough that neighbours fuse when they lean into each other.
+  var REST = 0.032;
+  var LOOSE = 0.11;
+
+  var em = 0;
+  var formed = still ? 1 : 0;
+  var started = false;
+  var clock = 0;
+
+  function soften(x) { blur.setAttribute('stdDeviation', (x * em).toFixed(2)); }
+  function out(x) { x = Math.min(Math.max(x, 0), 1); return 1 - (1 - x) * (1 - x) * (1 - x); }
+
+  function fit() {
+    em = parseFloat(getComputedStyle(word).fontSize);
+    soften(REST + (LOOSE - REST) * (1 - out(formed)));
+  }
+
+  // A swell travels the length of the word, one way then back, with a rest
+  // between passes. Letters it reaches widen a little, never taller, just
+  // enough to run into their neighbours and fuse, then settle back to type.
+  var PASS = 3.6;
+  var REST_GAP = 1.8;
+
+  function swell(i) {
+    var c = clock % (2 * (PASS + REST_GAP));
+    var back = c >= PASS + REST_GAP;
+    var u = (back ? c - PASS - REST_GAP : c) / PASS;
+    if (u > 1) return 0;
+    var e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(2 - 2 * u, 3) / 2;
+    var centre = -2 + e * (letters.length + 3);
+    if (back) centre = letters.length - 1 - centre;
+    var d = (i - centre) / 1.3;
+    return Math.exp(-d * d);
+  }
+
+  var running = false;
+  var raf = 0;
+  var then = 0;
+
+  function frame(now) {
+    raf = 0;
+    var dt = then ? Math.min((now - then) / 1000, 1 / 20) : 0;
+    then = now;
+
+    if (formed < 1) {
+      formed = Math.min(1, formed + dt / 1.6);
+      soften(REST + (LOOSE - REST) * (1 - out(formed)));
+    } else {
+      clock += dt;
+    }
+
+    letters.forEach(function (letter, i) {
+      var w = swell(i);
+      letter.style.transform = w < 0.002 ? '' :
+        'scaleX(' + (1 + 0.09 * w).toFixed(4) + ')';
+    });
+
+    if (running) raf = requestAnimationFrame(frame);
+  }
+
+  function run(on) {
+    running = on && started && !still;
+    if (running && !raf) { then = 0; raf = requestAnimationFrame(frame); }
+  }
+
+  fit();
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(mark);
+  else window.addEventListener('resize', fit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+
+  // The letters wait, still loose, until the footer comes into view, then
+  // form; after that the swell runs whenever the footer is on screen.
+  if (window.IntersectionObserver && !still) {
+    new IntersectionObserver(function (entries) {
+      var seen = entries[0].isIntersecting;
+      if (seen) started = true;
+      run(seen);
+    }, { threshold: 0.4 }).observe(mark);
+  } else {
+    formed = 1;
+    fit();
+  }
 })();
 </script>
 

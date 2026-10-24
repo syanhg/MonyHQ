@@ -15,21 +15,10 @@
   --paper: #ffffff;
   --ink: #000000;
   --gutter: clamp(24px, 6vw, 96px);
-  --measure: 1360px;
-  --hairline: #ededed;
   --quiet-ink: #4a4a4a;
-  --lede-ink: #767676;
   --wordmark: #ebebeb;
-  --placeholder: #f1f1f1;
-  --column: 960px;
-  --section-gap: clamp(64px, 14vh, 160px);
-  --radius: 14px;
-  --step: 18ms;
-  --contact-bg: #5a5a5a;
-  --contact-bg-hover: #474747;
-  --contact-ink: #fafafa;
-  --key-bg: #b3b3b3;
-  --key-ink: #474747;
+  --blush: #f7efea;
+  --column: 720px;
   color-scheme: light;
 }
 
@@ -37,7 +26,13 @@
 
 html { -webkit-text-size-adjust: 100%; }
 
+/* At least a window tall: the header pinned to the top, the footer to the
+   bottom, and the paragraph takes up the room between. */
 body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100svh;
   margin: 0;
   background: var(--paper);
   color: var(--ink);
@@ -47,419 +42,146 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Paper grain: a tile of grey noise under everything, fixed so it holds
+   still while the page scrolls. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='3' intercept='-1'/%3E%3CfeFuncG type='linear' slope='3' intercept='-1'/%3E%3CfeFuncB type='linear' slope='3' intercept='-1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='.12'/%3E%3C/svg%3E");
+}
+
 /* ---- Masthead -------------------------------------------------------- */
 
-/* Sits above the hero: every animated piece there ends up on its own
-   layer, and the products panel has to open over them. */
+/* On the column, so the name and Contact line up with the wordmark
+   below. */
 .masthead {
-  position: relative;
-  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  max-width: var(--measure);
+  max-width: calc(var(--column) + 2 * var(--gutter));
+  width: 100%;
   margin: 0 auto;
-  padding-block: clamp(20px, 4vh, 36px) 0;
-  padding-inline: var(--gutter);
+  padding: clamp(20px, 4vh, 36px) var(--gutter);
 }
 
-.mark { display: block; }
-
-.mark img {
-  display: block;
-  width: 30px;
-  height: 30px;
-}
-
+/* Plain words: no fills, no underline. The name on the left is set just
+   like the links on the right. */
 .nav {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 16px;
 }
 
-.menu-trigger,
-.contact {
-  display: inline-flex;
-  align-items: center;
-  height: 32px;
-  border: 0;
-  border-radius: 5px;
-  font: inherit;
+.mark,
+.nav a {
+  color: var(--ink);
   font-size: 0.875rem;
   font-weight: 500;
   letter-spacing: -0.01em;
   line-height: 1;
   text-decoration: none;
-  cursor: pointer;
-  transition: background-color 160ms ease;
 }
 
-/* No ring: keyboard focus shows as the hover fill instead. */
-.mark:focus,
-.menu-trigger:focus,
-.contact:focus,
-.menu-panel a:focus { outline: none; }
+.mark:focus-visible,
+.nav a:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
 
-.menu { position: relative; }
+/* ---- About ----------------------------------------------------------- */
 
-.menu-trigger {
-  gap: 6px;
-  padding: 0 10px;
-  background: transparent;
-  color: var(--ink);
-}
+/* ---- Ring ------------------------------------------------------------ */
 
-.menu-trigger:hover,
-.menu-trigger:focus-visible,
-.menu[data-open] .menu-trigger { background: var(--placeholder); }
-
-.menu-trigger svg { display: block; transition: transform 200ms ease; }
-.menu[data-open] .menu-trigger svg { transform: rotate(180deg); }
-
-/* Exactly as wide as the trigger; the labels line up under its own.
-   visibility keeps the closed links out of the tab order. */
-.menu-panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  right: 0;
-  padding: 4px;
-  border: 1px solid var(--hairline);
-  border-radius: 8px;
-  background: var(--paper);
-  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.18);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-4px);
-  transition: opacity 160ms ease, transform 160ms ease, visibility 0s linear 160ms;
-}
-
-.menu[data-open] .menu-panel {
-  opacity: 1;
-  visibility: visible;
-  transform: none;
-  transition: opacity 160ms ease, transform 160ms ease;
-}
-
-.menu-panel a {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 7px 5px;
-  border-radius: 4px;
-  color: var(--ink);
-  font-size: 0.875rem;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-  text-decoration: none;
-  transition: background-color 160ms ease;
-}
-
-.menu-panel a:hover,
-.menu-panel a:focus-visible { background: var(--placeholder); }
-
-.contact {
-  gap: 8px;
-  padding: 0 8px 0 12px;
-  background: var(--contact-bg);
-  color: var(--contact-ink);
-}
-
-.contact:hover,
-.contact:focus-visible { background: var(--contact-bg-hover); }
-
-.nav kbd {
-  display: inline-grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 3px;
-  background: var(--key-bg);
-  color: var(--key-ink);
-  font: inherit;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  line-height: 1;
-}
-
-/* On the white panel the keys go light; they darken a step with the row
-   so they don't dissolve into its hover fill. */
-.menu-panel kbd {
-  background: #efefef;
-  color: #6b6b6b;
-  transition: background-color 160ms ease;
-}
-
-.menu-panel a:hover kbd,
-.menu-panel a:focus-visible kbd { background: #e2e2e2; }
-
-/* No keyboard to press it with. */
-@media (hover: none) {
-  .contact { padding-right: 12px; }
-  .nav kbd { display: none; }
-}
-
-.hero {
-  max-width: var(--measure);
-  margin: 0 auto;
-  padding-inline: var(--gutter);
-  padding-block: clamp(40px, 9vh, 96px) 0;
-  text-align: center;
-}
-
-/* Inter wants real negative tracking even at this size. Always one row:
-   the line runs up to 17.4em (Inter widens at small optical sizes), so on
-   narrow screens the size follows the column instead of wrapping. */
-.hero h1 {
-  margin: 0;
-  font-size: min(clamp(1.375rem, 2.8vw, 2.375rem), calc((100vw - 2 * var(--gutter)) / 17.8));
-  font-weight: 500;
-  line-height: 1.04;
-  letter-spacing: -0.025em;
-  white-space: nowrap;
-}
-
-/* Light enough to sit behind the headline, still dark enough to read on
-   white (4.5:1). Free to wrap on phones, so balance the rows. */
-.lede {
-  margin: clamp(10px, 1.6vh, 16px) 0 0;
-  color: var(--lede-ink);
-  font-size: clamp(0.9375rem, 1.3vw, 1.125rem);
-  font-weight: 400;
-  line-height: 1.4;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
-}
-
-/* Well short of the column, so it reads as a clip sitting on the page
-   rather than a band across it. The wrapper carries the frame: Safari is
-   unreliable about clipping a video to its own border-radius. */
-.reel {
-  width: 100%;
-  max-width: var(--column);
-  margin: clamp(40px, 9vh, 96px) auto 0;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.reel video {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-/* One page-load sequence: the line resolves letter by letter, then the
-   description and the clip settle in behind it. */
-.hero h1 .w { display: inline-block; white-space: nowrap; }
-.hero h1 .c { display: inline-block; }
-
-@keyframes settle {
-  from { opacity: 0; filter: blur(12px); }
-  to   { opacity: 1; filter: blur(0); }
-}
-
-.is-animated .masthead {
-  animation: settle 620ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-}
-
-.is-animated .hero h1 .c {
-  animation: settle 620ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  animation-delay: calc((var(--i) + 6) * var(--step));
-}
-
-.is-animated .showcase,
-.is-animated .products,
-.is-animated footer {
-  animation: settle 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  animation-delay: calc((var(--n) + 10) * var(--step));
-}
-
-.is-animated .lede {
-  animation: settle 620ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  animation-delay: calc((var(--n) + 4) * var(--step));
-}
-
-.is-animated .reel {
-  animation: settle 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  animation-delay: calc((var(--n) + 6) * var(--step));
-}
-
-/* ---- Highlights ------------------------------------------------------ */
-
-.showcase {
-  max-width: var(--measure);
-  margin: 0 auto;
-  padding-inline: var(--gutter);
-  padding-top: var(--section-gap);
-}
-
-/* Three across on the same column the clip sits on. */
-.art-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(12px, 2.5vw, 20px);
-  max-width: var(--column);
-  margin: 0 auto;
-}
-
-.art-row figure { margin: 0; }
-
-/* Framed like the clip: white ground, the same hairline, the same radius. */
-.art {
+/* Sixteen slips round a slowly turning circle. The orbit spins one way and
+   each slip spins back the other, so they travel round while staying
+   upright. Everything is measured off the ring's own width (cqi), so it
+   scales as one piece. */
+.ring {
+  position: relative;
+  container-type: inline-size;
+  width: min(100%, clamp(280px, 50vh, 520px));
   aspect-ratio: 1;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: var(--paper);
+  margin: 0 auto clamp(24px, 4vh, 40px);
 }
 
-.art canvas {
+.orbit {
+  position: absolute;
+  inset: 0;
+  animation: spin 90s linear infinite;
+}
+
+/* 15cqi wide, so the centres sit 42.5cqi out and the slips at three and
+   nine o'clock just touch the ring's edge. */
+.orbit span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 15cqi;
+  aspect-ratio: 16 / 9;
+  translate: -50% -50%;
+  transform: rotate(calc(var(--i) * 22.5deg)) translateX(42.5cqi) rotate(calc(var(--i) * -22.5deg));
+}
+
+.orbit i {
   display: block;
-  width: 100%;
   height: 100%;
+  background-color: var(--blush);
+  animation: spin 90s linear infinite reverse;
 }
 
-/* Each caption is the same length, sized to sit in three rows at most. */
-.art-caption {
-  margin: clamp(10px, 1.6vh, 14px) 0 0;
-  color: var(--lede-ink);
-  font-size: 0.875rem;
-  line-height: 1.45;
-  letter-spacing: -0.01em;
-  text-wrap: pretty;
+@keyframes spin { to { rotate: 360deg; } }
+
+/* Soft orbs on blush, each ringed in a second and third colour as it fades
+   out. Eight of them; the second eight are the same turned half round. */
+.orbit span:nth-child(8n + 1) i { background-image: radial-gradient(48% 85% at 36% 52%, #5b4dff, #4ab3e3 25%, #e4476b 52%, #f2b07a 74%, #f7efea00); }
+.orbit span:nth-child(8n + 2) i { background-image: radial-gradient(55% 98% at 64% 44%, #b5d34c, #c8d653 40%, #efce74 70%, #f7efea00); }
+.orbit span:nth-child(8n + 3) i { background-image: radial-gradient(46% 82% at 44% 58%, #2f6cb5, #5f9fe0 32%, #b7d3f7 58%, #f3c4ee 80%, #f7efea00); }
+.orbit span:nth-child(8n + 4) i { background-image: radial-gradient(44% 78% at 58% 48%, #f49ad0, #a3b6ff 38%, #bcc6ff 60%, #f1b0ef 80%, #f7efea00); }
+.orbit span:nth-child(8n + 5) i { background-image: radial-gradient(40% 71% at 50% 50%, #0a1d22, #183f48 36%, #3c50ff 60%, #ef4747 75%, #f6b19c 88%, #f7efea00); }
+.orbit span:nth-child(8n + 6) i { background-image: radial-gradient(52% 92% at 40% 58%, #6d0d2c, #951542 36%, #5a0b20 62%, #d9718b 82%, #f7efea00); }
+.orbit span:nth-child(8n + 7) i { background-image: radial-gradient(36% 64% at 32% 56%, #2b3ad4, #6458ff 42%, #df7af5 74%, #f7efea00), radial-gradient(30% 53% at 72% 48%, #5fe6ad, #a6f4cd 55%, #f7efea00); }
+.orbit span:nth-child(8n + 8) i { background-image: radial-gradient(16% 28% at 26% 30%, #45285a, #f09a3a 55%, #f7efea00), radial-gradient(48% 85% at 68% 62%, #d5dc63, #f1cf78 60%, #f7efea00); }
+.orbit span:nth-child(n + 9) i { scale: -1 -1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit,
+  .orbit i { animation: none; }
 }
 
-.art-caption strong {
-  color: var(--ink);
-  font-weight: 500;
-}
-
-/* Three across only while a card is wide enough (290px) to keep its
-   caption to three rows. Below that, one under another on a narrower
-   column, wider than tall so the stack doesn't run on. */
-@media (max-width: 1079px) {
-  .art-row {
-    grid-template-columns: 1fr;
-    max-width: 520px;
-    gap: 28px;
-  }
-
-  .art { aspect-ratio: 3 / 2; }
-}
-
-/* The narrowest phones need a step down to stay within three rows. */
-@media (max-width: 359px) {
-  .art-caption { font-size: 0.8125rem; }
-}
-
-/* ---- Our Products ---------------------------------------------------- */
-
-.products {
-  max-width: var(--measure);
-  margin: 0 auto;
-  padding-inline: var(--gutter);
-  padding-block: var(--section-gap);
-}
-
-section h2 {
-  margin: 0 0 var(--section-gap);
-  text-align: center;
-  font-size: clamp(1.125rem, 2vw, 1.5rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-section h2:last-child { margin-bottom: 0; }
-
-/* A heading with a line under it: the pair keeps the gap below, and the
-   line speaks in the same voice as the one under the headline. */
-.section-head {
-  margin: 0 0 var(--section-gap);
-  text-align: center;
-}
-
-.section-head h2 {
-  margin: 0;
-  text-wrap: balance;
-}
-
-.section-head p {
-  margin: clamp(8px, 1.2vh, 12px) 0 0;
-  color: var(--lede-ink);
-  font-size: clamp(0.9375rem, 1.3vw, 1.125rem);
-  line-height: 1.4;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
-}
-
-/* Two across on the same column the clip sits on. */
-.product-row {
+/* Fills whatever the header and footer leave, and sits in the middle of it. */
+.about {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: clamp(12px, 2.5vw, 20px);
+  flex: 1;
+  align-content: center;
+  padding-inline: var(--gutter);
+}
+
+/* Bare on the paper, centred on the column; balanced so the rows come out
+   close to even. */
+.about p {
   max-width: var(--column);
   margin: 0 auto;
-}
-
-/* Both shots are white-ground mockups, so the hairline is what gives the
-   frame an edge against the paper -- same rule the clip carries. */
-.shot {
-  aspect-ratio: 2224 / 1300;
-  background: var(--placeholder);
-  border: 1px solid var(--hairline);
-  overflow: hidden;
-}
-
-.shot img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: clamp(10px, 1.6vh, 14px);
-}
-
-.name {
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 500;
-  letter-spacing: -0.01em;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-align: center;
+  text-wrap: balance;
 }
 
-.explore {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: none;
-  padding: 6px 11px;
-  border: 0;
-  border-radius: 5px;
-  background: var(--placeholder);
-  color: var(--ink);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  line-height: 1;
-  text-decoration: none;
-  transition: background-color 160ms ease;
+.about a {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
-.explore svg { display: block; }
-.explore:hover { background: #e7e7e7; }
-.explore:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.about a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 footer {
-  padding-inline: var(--gutter);
-  padding-bottom: clamp(32px, 6vh, 56px);
+  padding: clamp(32px, 6vh, 56px) var(--gutter);
   font-size: 0.8125rem;
   letter-spacing: -0.005em;
   color: var(--quiet-ink);
@@ -496,11 +218,11 @@ footer {
 .elsewhere svg { display: block; transition: transform 160ms ease; }
 .elsewhere a:hover { color: var(--ink); }
 .elsewhere a:hover svg { transform: translate(1px, -1px); }
-.elsewhere a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 2px; }
+.elsewhere a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-/* On the clip's column, and a container so the letters can size to its
-   width rather than the window's, which would count a scrollbar. The goo
-   filter rounds the letters, and fuses neighbours wherever they touch. */
+/* On the column, and a container so the letters can size to its width
+   rather than the window's, which would count a scrollbar. The goo filter
+   rounds the letters, and fuses neighbours wherever they touch. */
 .wordmark {
   position: relative;
   container-type: inline-size;
@@ -542,79 +264,41 @@ footer {
 <body>
 
 <header class="masthead">
-  <a class="mark" href="./"><img src="assets/deer-logo.svg" alt="Mony" width="30" height="30"></a>
+  <a class="mark" href="./">MonyCompany</a>
   <nav class="nav" aria-label="Main">
-    <div class="menu">
-      <button class="menu-trigger" type="button" aria-expanded="false" aria-controls="products-menu">Products <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      <div class="menu-panel" id="products-menu">
-        <a href="https://frida.chat/" aria-keyshortcuts="F">Frida <kbd aria-hidden="true">F</kbd></a>
-        <a href="https://getsoffo.com/" aria-keyshortcuts="S">Soffo <kbd aria-hidden="true">S</kbd></a>
-      </div>
-    </div>
-    <a class="contact" href="mailto:alex@mony.company" aria-keyshortcuts="C">Contact <kbd aria-hidden="true">C</kbd></a>
+    <a href="https://frida.chat/">Frida</a>
+    <a href="mailto:alex@mony.company">Contact</a>
   </nav>
 </header>
 
-<section class="hero">
-  <h1>The Interface for AI Agents and People</h1>
-  <p class="lede">An intuitive, non-deterministic interface built for consumers</p>
-  <div class="reel">
-    <video src="assets/frida.mp4" width="1280" height="720" autoplay muted loop playsinline preload="metadata" disablepictureinpicture></video>
+<section class="about" aria-label="About">
+  <div class="ring" aria-hidden="true">
+    <div class="orbit">
+      <span style="--i: 0"><i></i></span>
+      <span style="--i: 1"><i></i></span>
+      <span style="--i: 2"><i></i></span>
+      <span style="--i: 3"><i></i></span>
+      <span style="--i: 4"><i></i></span>
+      <span style="--i: 5"><i></i></span>
+      <span style="--i: 6"><i></i></span>
+      <span style="--i: 7"><i></i></span>
+      <span style="--i: 8"><i></i></span>
+      <span style="--i: 9"><i></i></span>
+      <span style="--i: 10"><i></i></span>
+      <span style="--i: 11"><i></i></span>
+      <span style="--i: 12"><i></i></span>
+      <span style="--i: 13"><i></i></span>
+      <span style="--i: 14"><i></i></span>
+      <span style="--i: 15"><i></i></span>
+    </div>
   </div>
-</section>
-
-<section class="showcase" aria-labelledby="idea">
-  <header class="section-head">
-    <h2 id="idea">What We Mean by Minimalistic Complexity</h2>
-    <p>Not making the system simple, but making its complexity effortless to interact with.</p>
-  </header>
-  <div class="art-row">
-    <figure>
-      <div class="art"><canvas data-art="ripple" role="img" aria-label="A row of soft charcoal drops on a travelling wave, running together into a bar and parting into beads"></canvas></div>
-      <figcaption class="art-caption"><strong>Fluid-like design.</strong> Consumers shouldn’t have to learn how software works. It should adapt to them, not the other way around.</figcaption>
-    </figure>
-    <figure>
-      <div class="art"><canvas data-art="bounce" role="img" aria-label="A drop bouncing on a soft bar, squashing into it on landing and pulling free on a thread"></canvas></div>
-      <figcaption class="art-caption"><strong>More happening, less to manage.</strong> Agents and tools work in the background. You see what matters, not the technical complexity.</figcaption>
-    </figure>
-    <figure>
-      <div class="art"><canvas data-art="ring" role="img" aria-label="Eight drops on a turning circle that close into one rippling loop, then drift apart"></canvas></div>
-      <figcaption class="art-caption"><strong>Less prompting, more doing.</strong> Built for consumers. The same depth of capability, with less to write and less to keep track of.</figcaption>
-    </figure>
-  </div>
-</section>
-
-<section class="products">
-  <header class="section-head">
-    <h2>Two Products, Built on the Same Idea</h2>
-    <p>Frida for everyday questions, Soffo for engineering, with every agent out of sight.</p>
-  </header>
-  <div class="product-row">
-    <article class="product">
-      <div class="shot">
-        <img src="assets/fridaphoto.png" width="1000" height="585" loading="lazy" decoding="async" alt="Frida answering a question about churches in Paris on iPhone">
-      </div>
-      <div class="meta">
-        <span class="name">Frida</span>
-        <a class="explore" href="https://frida.chat/" aria-label="Explore Frida">Explore <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-      </div>
-    </article>
-    <article class="product">
-      <div class="shot">
-        <img src="assets/soffophoto.png" width="1000" height="585" loading="lazy" decoding="async" alt="Soffo engineering workspace with an agent task list">
-      </div>
-      <div class="meta">
-        <span class="name">Soffo</span>
-        <a class="explore" href="https://getsoffo.com/" aria-label="Explore Soffo">Explore <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-      </div>
-    </article>
-  </div>
+  <p>At MonyCompany, we believe agentic interfaces should feel like water flowing through a river, fluid, continuous, and open-ended. We’re building <a href="https://frida.chat/">Frida</a> around a simple principle of minimalism on the surface, with uncompromising technical complexity beneath.</p>
 </section>
 
 <footer>
   <div class="wordmark" aria-hidden="true"><span><span>M</span><span>o</span><span>n</span><span>y</span> <span>C</span><span>o</span><span>m</span><span>p</span><span>a</span><span>n</span><span>y</span></span></div>
   <div class="colophon">
-    <p>© 2026 MonyCompany Inc. All rights reserved.</p>
+    <p>© 2026 MonyCompany Inc.</p>
     <nav class="elsewhere" aria-label="Elsewhere">
       <a href="https://www.linkedin.com/company/monyinc" target="_blank" rel="noopener noreferrer">LinkedIn <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
       <a href="https://x.com/monycompany" target="_blank" rel="noopener noreferrer">X (Twitter) <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
@@ -631,9 +315,6 @@ footer {
 
 <script>
 (function () {
-  var menu = document.querySelector('.menu');
-  var trigger = menu.querySelector('.menu-trigger');
-  var contact = document.querySelector('.contact');
   var mark = document.querySelector('.mark');
 
   // There is only the one page, so home means the top of it. A plain
@@ -644,348 +325,6 @@ footer {
     var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     window.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
   });
-
-  function setOpen(open) {
-    menu.toggleAttribute('data-open', open);
-    trigger.setAttribute('aria-expanded', String(open));
-  }
-
-  trigger.addEventListener('click', function () {
-    setOpen(!menu.hasAttribute('data-open'));
-  });
-
-  document.addEventListener('click', function (e) {
-    if (!menu.contains(e.target)) setOpen(false);
-  });
-
-  menu.addEventListener('focusout', function (e) {
-    if (!menu.contains(e.relatedTarget)) setOpen(false);
-  });
-
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && menu.hasAttribute('data-open')) {
-      setOpen(false);
-      trigger.focus();
-      return;
-    }
-
-    // The letters on the keys are real shortcuts: C anywhere, and F and S
-    // for the products while their panel is open.
-    if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
-    var key = e.key.length === 1 ? e.key.toUpperCase() : '';
-    if (!/^[A-Z]$/.test(key)) return;
-    var t = e.target;
-    if (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
-
-    var link = menu.hasAttribute('data-open') && menu.querySelector('.menu-panel [aria-keyshortcuts="' + key + '"]');
-    if (!link && key === 'C') link = contact;
-    if (link) link.click();
-  });
-})();
-
-(function () {
-  var h1 = document.querySelector('.hero h1');
-  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  if (reduce) {
-    for (var v of document.querySelectorAll('video')) {
-      v.removeAttribute('autoplay');
-      v.controls = true;
-      v.pause();
-    }
-    return;
-  }
-
-  if (!h1) return;
-
-  var nodes = Array.prototype.slice.call(h1.childNodes);
-  var out = document.createDocumentFragment();
-  var i = 0;
-
-  for (var node of nodes) {
-    if (node.nodeName === 'BR') { out.appendChild(node); continue; }
-
-    for (var part of node.textContent.split(/(\s+)/)) {
-      if (!part) continue;
-      if (/^\s+$/.test(part)) { out.appendChild(document.createTextNode(part)); continue; }
-
-      var word = document.createElement('span');
-      word.className = 'w';
-      for (var ch of part) {
-        var c = document.createElement('span');
-        c.className = 'c';
-        c.style.setProperty('--i', i++);
-        c.textContent = ch;
-        word.appendChild(c);
-      }
-      out.appendChild(word);
-    }
-  }
-
-  // Safari can leave a finished blur baked into some letters' layers. The
-  // end state matches the resting style, so drop each animation once it has
-  // run and let the element repaint as plain text.
-  document.addEventListener('animationend', function (e) {
-    if (e.animationName === 'settle') e.target.style.animation = 'none';
-  });
-
-  h1.textContent = '';
-  h1.appendChild(out);
-  document.body.style.setProperty('--n', i);
-  document.body.classList.add('is-animated');
-})();
-
-(function () {
-  var show = document.querySelector('.showcase');
-  if (!show) return;
-
-  var row = show.querySelector('.art-row');
-  var canvases = Array.prototype.slice.call(row.querySelectorAll('canvas[data-art]'));
-  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // ---- Drawing ----
-
-  // Every piece is the same material: soft charcoal, darker toward its
-  // core, drawn as one smoothed field so shapes neck and part like a liquid
-  // instead of overlapping. Lengths are in tenths of the card's height.
-  var EDGE = [71, 71, 71];
-  var CORE = [53, 53, 53];
-  var MAX = 8;
-
-  var VERT = 'attribute vec2 p; void main() { gl_Position = vec4(p, 0.0, 1.0); }';
-
-  // Each shape is a capsule: a segment with a radius (a circle when its two
-  // ends meet). The smooth minimum is what lets neighbours reach for each
-  // other across a gap of up to uGoo. It also flattens the field where they
-  // join, so given derivatives the edge is measured against the field's own
-  // slope on screen; a fixed width would smear every thin neck.
-  function frag(slope) {
-    return [
-      slope ? '#extension GL_OES_standard_derivatives : enable' : '',
-      '#ifdef GL_FRAGMENT_PRECISION_HIGH',
-      'precision highp float;',
-      '#else',
-      'precision mediump float;',
-      '#endif',
-      'uniform vec2 uRes;',
-      'uniform float uUnit;',
-      'uniform float uGoo;',
-      'uniform vec4 uSeg[' + MAX + '];',
-      'uniform float uRad[' + MAX + '];',
-      'uniform int uCount;',
-      'uniform vec3 uEdge;',
-      'uniform vec3 uCore;',
-      'void main() {',
-      '  vec2 p = (gl_FragCoord.xy - 0.5 * uRes) / uUnit;',
-      '  float d = 1e3;',
-      '  for (int i = 0; i < ' + MAX + '; i++) {',
-      '    if (i >= uCount) break;',
-      '    vec2 pa = p - uSeg[i].xy;',
-      '    vec2 ba = uSeg[i].zw - uSeg[i].xy;',
-      '    float t = clamp(dot(pa, ba) / max(dot(ba, ba), 1e-5), 0.0, 1.0);',
-      '    float e = length(pa - ba * t) - uRad[i];',
-      '    float h = max(uGoo - abs(d - e), 0.0) / uGoo;',
-      '    d = min(d, e) - h * h * uGoo * 0.25;',
-      '  }',
-      slope
-        ? '  float a = clamp(0.5 - d / max(length(vec2(dFdx(d), dFdy(d))), 1e-5), 0.0, 1.0);'
-        : '  float a = clamp(0.5 - d * uUnit, 0.0, 1.0);',
-      '  vec3 c = mix(uEdge, uCore, 1.0 - exp(-max(-d, 0.0) / 0.62));',
-      '  gl_FragColor = vec4(c * a, a);',
-      '}'
-    ].join('\n');
-  }
-
-  function stage(canvas) {
-    var gl = canvas.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: true });
-    if (!gl) return null;
-
-    function part(type, source) {
-      var s = gl.createShader(type);
-      gl.shaderSource(s, source);
-      gl.compileShader(s);
-      return s;
-    }
-
-    var program = gl.createProgram();
-    gl.attachShader(program, part(gl.VERTEX_SHADER, VERT));
-    gl.attachShader(program, part(gl.FRAGMENT_SHADER, frag(!!gl.getExtension('OES_standard_derivatives'))));
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return null;
-    gl.useProgram(program);
-
-    // One triangle that covers the whole canvas.
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    var at = gl.getAttribLocation(program, 'p');
-    gl.enableVertexAttribArray(at);
-    gl.vertexAttribPointer(at, 2, gl.FLOAT, false, 0, 0);
-
-    var u = {};
-    ['uRes', 'uUnit', 'uGoo', 'uSeg', 'uRad', 'uCount', 'uEdge', 'uCore'].forEach(function (name) {
-      u[name] = gl.getUniformLocation(program, name);
-    });
-    gl.uniform3f(u.uEdge, EDGE[0] / 255, EDGE[1] / 255, EDGE[2] / 255);
-    gl.uniform3f(u.uCore, CORE[0] / 255, CORE[1] / 255, CORE[2] / 255);
-
-    return { gl: gl, u: u, seg: new Float32Array(MAX * 4), rad: new Float32Array(MAX) };
-  }
-
-  // Eases between [time, value] keys, holding the first and last values
-  // outside them. In-out cubic throughout: slow to leave, quick through the
-  // middle, slow to land.
-  function key(t, keys) {
-    if (t <= keys[0][0]) return keys[0][1];
-    for (var i = 1; i < keys.length; i++) {
-      if (t < keys[i][0]) {
-        var a = keys[i - 1], b = keys[i];
-        var x = (t - a[0]) / (b[0] - a[0]);
-        x = x < 0.5 ? 4 * x * x * x : 1 - Math.pow(2 - 2 * x, 3) / 2;
-        return a[1] + (b[1] - a[1]) * x;
-      }
-    }
-    return keys[keys.length - 1][1];
-  }
-
-  function drop(x, y, r) { return [x, y, x, y, r]; }
-
-  // 1. Ripple: a row of drops on a slow travelling wave. While the wave is
-  // low they run together into one soft bar; as it builds, the steep
-  // stretches pull apart into beads and the low points gather the most.
-  function ripple(t) {
-    var swell = 0.25 + 0.75 * (0.5 - 0.5 * Math.cos(t * 0.55));
-    var shapes = [];
-    for (var i = 0; i < 7; i++) {
-      var edge = Math.abs(i - 3) / 3;
-      var phase = t * 1.7 - i * 1.2;
-      var y = Math.sin(phase) * swell * (1 - 0.3 * edge * edge);
-      var r = (0.48 - 0.1 * Math.sin(phase) * swell) * (1 - 0.12 * edge);
-      shapes.push(drop((i - 3) * 1.1, y, r));
-    }
-    return shapes;
-  }
-
-  // 2. Bounce: a drop bouncing on a soft bar. On landing it squashes and
-  // sinks in while the bar gives under it; leaving, it pulls free on a
-  // thread, and it stretches a little where it falls fastest. The bar is
-  // one capsule: two meeting under the drop would swell where they join.
-  function bounce(t) {
-    var c = t % 1.6;
-    var floor = -1.8, rest = -0.8;
-    var y = rest, wide = 0, tall = 0, r = 0.7, dip = 0;
-    if (c < 0.22) {
-      var q = Math.sin(Math.PI * c / 0.22);
-      y = rest - 0.28 * q;
-      wide = 0.32 * q;
-      r = 0.7 - 0.06 * q;
-      dip = 0.18 * q;
-    } else {
-      var f = (c - 0.22) / 1.38;
-      y = rest + 9.6 * f * (1 - f);
-      tall = 0.18 * Math.abs(1 - 2 * f) * Math.min(1, 8 * Math.min(f, 1 - f));
-    }
-    return [
-      [-1.8, floor - dip, 1.8, floor - dip, 0.3],
-      [-wide, y - tall, wide, y + tall, r]
-    ];
-  }
-
-  // 3. Ring: eight drops round a slowly turning circle. They draw in until
-  // they close into one loop, which ripples round on itself before it lets
-  // go and the drops drift back out. Alternate drops move a beat apart, so
-  // the loop closes and opens in a stagger.
-  function ring(t) {
-    var c = t % 7;
-    var even = key(c, [[1.2, 0], [2.1, 1], [4.6, 1], [5.5, 0]]);
-    var odd = key(c, [[1.4, 0], [2.3, 1], [4.8, 1], [5.7, 0]]);
-    var shapes = [];
-    for (var i = 0; i < 8; i++) {
-      var k = i % 2 ? odd : even;
-      var a = t * 0.25 + i * Math.PI / 4;
-      var wobble = 0.06 * Math.sin(3 * a - t * 2.2) * Math.min(even, odd);
-      var R = 2.2 - 0.65 * k + wobble;
-      shapes.push(drop(Math.cos(a) * R, Math.sin(a) * R, 0.42 + 0.08 * k + wobble * 0.5));
-    }
-    return shapes;
-  }
-
-  function render(view) {
-    var s = view.stage;
-    if (!s || !view.canvas.width) return;
-    var gl = s.gl;
-    var shapes = view.scene(view.clock);
-    var n = 0;
-
-    // A shape with next to no radius would still pull a speck out of its
-    // neighbours, so it sits the frame out.
-    shapes.forEach(function (q) {
-      if (q[4] <= 0.02 || n === MAX) return;
-      s.seg[n * 4] = q[0];
-      s.seg[n * 4 + 1] = q[1];
-      s.seg[n * 4 + 2] = q[2];
-      s.seg[n * 4 + 3] = q[3];
-      s.rad[n] = q[4];
-      n++;
-    });
-
-    gl.viewport(0, 0, view.canvas.width, view.canvas.height);
-    gl.uniform2f(s.u.uRes, view.canvas.width, view.canvas.height);
-    gl.uniform1f(s.u.uUnit, view.canvas.height / 10);
-    gl.uniform1f(s.u.uGoo, 1);
-    gl.uniform4fv(s.u.uSeg, s.seg);
-    gl.uniform1fv(s.u.uRad, s.rad);
-    gl.uniform1i(s.u.uCount, n);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-  }
-
-  // ---- Running ----
-
-  var SCENES = { ripple: ripple, bounce: bounce, ring: ring };
-  var views = canvases.map(function (canvas) {
-    return { canvas: canvas, stage: stage(canvas), scene: SCENES[canvas.getAttribute('data-art')], clock: 0 };
-  });
-
-  // Held still, each rests mid-gesture: the row beading, the drop pulling
-  // free, the loop closed.
-  if (still) { views[0].clock = 4; views[1].clock = 0.32; views[2].clock = 3.4; }
-
-  function fit() {
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    views.forEach(function (view) {
-      view.canvas.width = Math.round(view.canvas.clientWidth * dpr);
-      view.canvas.height = Math.round(view.canvas.clientHeight * dpr);
-      render(view);
-    });
-  }
-
-  // They only run while the row is on screen, and each clock stops with
-  // it, so a piece picks up where it was left.
-  var running = false;
-  var raf = 0;
-  var then = 0;
-
-  function frame(now) {
-    raf = 0;
-    var dt = then ? Math.min((now - then) / 1000, 1 / 20) : 0;
-    then = now;
-    views.forEach(function (view) {
-      view.clock += dt;
-      render(view);
-    });
-    if (running) raf = requestAnimationFrame(frame);
-  }
-
-  function run(on) {
-    running = on && !still;
-    if (running && !raf) { then = 0; raf = requestAnimationFrame(frame); }
-  }
-
-  if (window.ResizeObserver) new ResizeObserver(fit).observe(row);
-  else { fit(); window.addEventListener('resize', fit); }
-
-  if (window.IntersectionObserver) {
-    new IntersectionObserver(function (entries) { run(entries[0].isIntersecting); }).observe(show);
-  } else run(true);
 })();
 
 (function () {
@@ -1069,8 +408,8 @@ footer {
   else window.addEventListener('resize', fit);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
 
-  // The letters wait, still loose, until the footer comes into view, then
-  // form; after that the swell runs whenever the footer is on screen.
+  // The letters wait, still loose, until they come into view, then form;
+  // after that the swell runs whenever they're on screen.
   if (window.IntersectionObserver && !still) {
     new IntersectionObserver(function (entries) {
       var seen = entries[0].isIntersecting;

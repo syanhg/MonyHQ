@@ -93,9 +93,9 @@ body::before {
 
 /* ---- Ring ------------------------------------------------------------ */
 
-/* Sixteen slips round a slowly turning circle. The orbit spins one way and
-   each slip spins back the other, so they travel round while staying
-   upright. Everything is measured off the ring's own width (cqi), so it
+/* Sixteen slips laid along a slowly turning circle, each one tangent to it,
+   so every slip and every gap between them is the same and the whole ring
+   is round. Everything is measured off the ring's own width (cqi), so it
    scales as one piece. */
 .ring {
   position: relative;
@@ -111,23 +111,23 @@ body::before {
   animation: spin 90s linear infinite;
 }
 
-/* 15cqi wide, so the centres sit 42.5cqi out and the slips at three and
-   nine o'clock just touch the ring's edge. */
+/* 13cqi along the circle, centres 45.8cqi out: far enough that the outer
+   corners just meet the ring's edge, and the gaps open a little from the
+   inside edge to the outside one. */
 .orbit span {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 15cqi;
+  width: 13cqi;
   aspect-ratio: 16 / 9;
   translate: -50% -50%;
-  transform: rotate(calc(var(--i) * 22.5deg)) translateX(42.5cqi) rotate(calc(var(--i) * -22.5deg));
+  transform: rotate(calc(var(--i) * 22.5deg)) translateX(45.8cqi) rotate(90deg);
 }
 
 .orbit i {
   display: block;
   height: 100%;
   background-color: var(--blush);
-  animation: spin 90s linear infinite reverse;
 }
 
 @keyframes spin { to { rotate: 360deg; } }
@@ -145,8 +145,7 @@ body::before {
 .orbit span:nth-child(n + 9) i { scale: -1 -1; }
 
 @media (prefers-reduced-motion: reduce) {
-  .orbit,
-  .orbit i { animation: none; }
+  .orbit { animation: none; }
 }
 
 /* Fills whatever the header and footer leave, and sits in the middle of it. */

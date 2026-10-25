@@ -134,7 +134,9 @@ body::before {
   background-color: var(--blush);
 }
 
-@keyframes spin { to { rotate: 360deg; } }
+/* Turned with transform rather than rotate, which older Safari animates on
+   the main thread instead of handing to the GPU. */
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* Soft orbs on blush, each ringed in a second and third colour as it fades
    out. Eight of them; the second eight are the same turned half round. */
@@ -309,6 +311,19 @@ footer {
   filter: url(#goo);
 }
 
+/* Drawn on the GPU instead (see the script): the filter comes off and the
+   letters stay only to hold the layout. The canvas covers the filter's
+   region, so the goo is cut off just where the filter would cut it. */
+.wordmark.drawn { filter: none; }
+.wordmark.drawn > span { visibility: hidden; }
+
+.wordmark canvas {
+  position: absolute;
+  left: -5%;
+  top: -40%;
+  pointer-events: none;
+}
+
 /* Measured in Inter at this weight and tracking, letter by letter (each
    its own box, so no kerning between them), the ink runs 6.576em and starts
    0.06em in. The goo wears a little off the tail of the last y, so on screen
@@ -430,13 +445,258 @@ footer {
   var formed = still ? 1 : 0;
   var started = false;
   var clock = 0;
+  var widths = letters.map(function () { return 1; });
 
-  function soften(x) { blur.setAttribute('stdDeviation', (x * em).toFixed(2)); }
+  // Safari works the SVG filter out again in software on every frame that
+  // anything under it moves, which is more than a phone can manage. So
+  // where there's WebGL, the same goo is drawn on the GPU instead, on a
+  // canvas over the letters. Without WebGL the filter stays, and the
+  // letters stand formed and still.
+  var goo = gpu();
+  if (goo) {
+    mark.classList.add('drawn');
+  } else {
+    formed = 1;
+    still = true;
+  }
+
   function out(x) { x = Math.min(Math.max(x, 0), 1); return 1 - (1 - x) * (1 - x) * (1 - x); }
+
+  function render() {
+    var soft = (REST + (LOOSE - REST) * (1 - out(formed))) * em;
+    if (goo) goo.draw(soft, widths);
+    else blur.setAttribute('stdDeviation', soft.toFixed(2));
+  }
 
   function fit() {
     em = parseFloat(getComputedStyle(word).fontSize);
-    soften(REST + (LOOSE - REST) * (1 - out(formed)));
+    if (goo) goo.fit();
+    render();
+  }
+
+  // The filter step for step: each letter drawn on its own and widened
+  // about its centre, then blurred across and down, then cut at the alpha
+  // the filter's matrix cuts at (30a - 14). Null where there's no WebGL.
+  function gpu() {
+    var canvas = document.createElement('canvas');
+    var gl = canvas.getContext('webgl', { antialias: false, depth: false, stencil: false });
+    if (!gl) return null;
+
+    var GLYPH_VS =
+      'attribute vec2 pos; attribute vec2 coord; uniform vec2 size; varying vec2 uv;' +
+      'void main() { uv = coord; gl_Position = vec4(pos / size * vec2(2, -2) + vec2(-1, 1), 0, 1); }';
+    var GLYPH_FS =
+      'precision mediump float; uniform sampler2D tex; varying vec2 uv;' +
+      'void main() { gl_FragColor = vec4(texture2D(tex, uv).a); }';
+    var BLUR_VS =
+      'attribute vec2 pos; varying vec2 uv;' +
+      'void main() { uv = pos * 0.5 + 0.5; gl_Position = vec4(pos, 0, 1); }';
+    var BLUR_FS =
+      '#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n' +
+      'uniform sampler2D tex; uniform vec2 dir; uniform float sigma; uniform float cut; uniform vec3 ink;' +
+      'varying vec2 uv;' +
+      'void main() {' +
+      '  float r = min(ceil(3.0 * sigma), 120.0);' +
+      '  float sum = texture2D(tex, uv).a, total = 1.0;' +
+      '  for (int k = 1; k <= 120; k++) {' +
+      '    float i = float(k);' +
+      '    if (i > r) break;' +
+      '    float w = exp(-0.5 * i * i / (sigma * sigma));' +
+      '    sum += w * (texture2D(tex, uv + i * dir).a + texture2D(tex, uv - i * dir).a);' +
+      '    total += 2.0 * w;' +
+      '  }' +
+      '  float a = sum / total;' +
+      '  if (cut > 0.5) { a = clamp(30.0 * a - 14.0, 0.0, 1.0); gl_FragColor = vec4(ink * a, a); }' +
+      '  else gl_FragColor = vec4(a);' +
+      '}';
+
+    var ink = getComputedStyle(mark).color.match(/[\d.]+/g).slice(0, 3).map(function (c) { return c / 255; });
+    var glyphs, blurs, quads, tri, sheet, mask, across;
+    var dpr = 1, w = 0, h = 0, pad = 0, cell = 0, sheetW = 0, sheetH = 0;
+    var boxes = [];
+    var key = '';
+    var lost = false;
+    var last = null;
+
+    function program(vs, fs) {
+      var p = gl.createProgram();
+      [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]].forEach(function (s) {
+        var shader = gl.createShader(s[0]);
+        gl.shaderSource(shader, s[1]);
+        gl.compileShader(shader);
+        gl.attachShader(p, shader);
+      });
+      gl.bindAttribLocation(p, 0, 'pos');
+      gl.bindAttribLocation(p, 1, 'coord');
+      gl.linkProgram(p);
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+      var u = {};
+      ['size', 'dir', 'sigma', 'cut', 'ink'].forEach(function (n) { u[n] = gl.getUniformLocation(p, n); });
+      return { p: p, u: u };
+    }
+
+    function texture() {
+      var t = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      return t;
+    }
+
+    function target() {
+      var t = texture();
+      var fb = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+      return { tex: t, fb: fb };
+    }
+
+    function setup() {
+      glyphs = program(GLYPH_VS, GLYPH_FS);
+      blurs = program(BLUR_VS, BLUR_FS);
+      quads = gl.createBuffer();
+      tri = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, tri);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      sheet = texture();
+      mask = target();
+      across = target();
+    }
+
+    // Measured off the letters as laid out, in the canvas's own pixels.
+    // The letters are drawn once onto a sheet, each in a cell of its own
+    // with room either side for any ink that hangs past its box; every
+    // frame after that only moves and stretches the cells.
+    function fit() {
+      if (lost) return;
+      dpr = window.devicePixelRatio || 1;
+      var box = mark.getBoundingClientRect();
+      var left = box.left - 0.05 * box.width;
+      var top = box.top - 0.4 * box.height;
+
+      // An empty inline box sits on the baseline.
+      var probe = document.createElement('i');
+      probe.style.cssText = 'display:inline-block;width:0;height:0';
+      word.appendChild(probe);
+      var base = (probe.getBoundingClientRect().bottom - top) * dpr;
+      word.removeChild(probe);
+
+      boxes = letters.map(function (letter) {
+        var r = letter.getBoundingClientRect();
+        return [(r.left - left) * dpr, (r.right - left) * dpr];
+      });
+
+      var k = [dpr, box.width, box.height, base].concat(boxes).join();
+      if (k === key) return;
+      key = k;
+
+      w = Math.round(1.1 * box.width * dpr);
+      h = Math.round(1.8 * box.height * dpr);
+      canvas.width = w;
+      canvas.height = h;
+      canvas.style.width = w / dpr + 'px';
+      canvas.style.height = h / dpr + 'px';
+
+      pad = Math.ceil(0.3 * em * dpr);
+      cell = Math.ceil(Math.max.apply(null, boxes.map(function (b) { return b[1] - b[0]; }))) + 2 * pad;
+      sheetW = 4 * cell;
+      sheetH = Math.ceil(letters.length / 4) * h;
+
+      var paper = document.createElement('canvas');
+      paper.width = sheetW;
+      paper.height = sheetH;
+      var c = paper.getContext('2d');
+      var type = getComputedStyle(word);
+      c.font = type.fontWeight + ' ' + em * dpr + 'px ' + type.fontFamily;
+      c.fillStyle = '#fff';
+      letters.forEach(function (letter, i) {
+        c.fillText(letter.textContent, (i % 4) * cell + pad, Math.floor(i / 4) * h + base);
+      });
+
+      gl.bindTexture(gl.TEXTURE_2D, sheet);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, paper);
+      [mask, across].forEach(function (t) {
+        gl.bindTexture(gl.TEXTURE_2D, t.tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      });
+    }
+
+    function pass(fb, tex, dx, dy, cut) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.uniform2f(blurs.u.dir, dx, dy);
+      gl.uniform1f(blurs.u.cut, cut);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+
+    // The blur in CSS px, as the filter's stdDeviation would be.
+    function draw(soft, widths) {
+      last = [soft, widths];
+      if (lost || !w) return;
+
+      var v = [];
+      boxes.forEach(function (b, i) {
+        var mid = (b[0] + b[1]) / 2;
+        var x0 = mid + (b[0] - pad - mid) * widths[i];
+        var x1 = mid + (b[1] + pad - mid) * widths[i];
+        var u0 = (i % 4) * cell / sheetW;
+        var u1 = u0 + (b[1] - b[0] + 2 * pad) / sheetW;
+        var v0 = Math.floor(i / 4) * h / sheetH;
+        var v1 = v0 + h / sheetH;
+        v.push(x0, 0, u0, v0, x1, 0, u1, v0, x0, h, u0, v1,
+               x0, h, u0, v1, x1, 0, u1, v0, x1, h, u1, v1);
+      });
+
+      gl.viewport(0, 0, w, h);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, mask.fb);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.useProgram(glyphs.p);
+      gl.uniform2f(glyphs.u.size, w, h);
+      gl.bindTexture(gl.TEXTURE_2D, sheet);
+      gl.bindBuffer(gl.ARRAY_BUFFER, quads);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(v), gl.DYNAMIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.enableVertexAttribArray(1);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 16, 0);
+      gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 16, 8);
+      gl.drawArrays(gl.TRIANGLES, 0, v.length / 4);
+      gl.disable(gl.BLEND);
+      gl.disableVertexAttribArray(1);
+
+      gl.useProgram(blurs.p);
+      gl.uniform1f(blurs.u.sigma, soft * dpr);
+      gl.uniform3fv(blurs.u.ink, ink);
+      gl.bindBuffer(gl.ARRAY_BUFFER, tri);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      pass(across.fb, mask.tex, 1 / w, 0, 0);
+      pass(null, across.tex, 0, 1 / h, 1);
+    }
+
+    // A phone can take the GPU back, say while the tab is in the
+    // background. Until it hands it over again, the filter stands in.
+    canvas.addEventListener('webglcontextlost', function (e) {
+      e.preventDefault();
+      lost = true;
+      blur.setAttribute('stdDeviation', (REST * em).toFixed(2));
+      mark.classList.remove('drawn');
+    });
+    canvas.addEventListener('webglcontextrestored', function () {
+      lost = false;
+      key = '';
+      setup();
+      fit();
+      mark.classList.add('drawn');
+      if (last) draw(last[0], last[1]);
+    });
+
+    try { setup(); } catch (e) { return null; }
+    mark.appendChild(canvas);
+    return { fit: fit, draw: draw };
   }
 
   // A swell travels the length of the word, one way then back, with a rest
@@ -466,19 +726,21 @@ footer {
     var dt = then ? Math.min((now - then) / 1000, 1 / 20) : 0;
     then = now;
 
+    // Drawn again only when something has moved; between passes nothing has.
+    var moved = formed < 1;
     if (formed < 1) {
       formed = Math.min(1, formed + dt / 1.6);
-      soften(REST + (LOOSE - REST) * (1 - out(formed)));
     } else {
       clock += dt;
     }
 
     letters.forEach(function (letter, i) {
       var w = swell(i);
-      letter.style.transform = w < 0.002 ? '' :
-        'scaleX(' + (1 + 0.09 * w).toFixed(4) + ')';
+      w = w < 0.002 ? 1 : 1 + 0.09 * w;
+      if (w !== widths[i]) { widths[i] = w; moved = true; }
     });
 
+    if (moved) render();
     if (running) raf = requestAnimationFrame(frame);
   }
 
@@ -487,9 +749,11 @@ footer {
     if (running && !raf) { then = 0; raf = requestAnimationFrame(frame); }
   }
 
+  // The window's resize also catches a change of zoom, which can leave the
+  // column the same width but not the canvas's pixels.
   fit();
+  window.addEventListener('resize', fit);
   if (window.ResizeObserver) new ResizeObserver(fit).observe(mark);
-  else window.addEventListener('resize', fit);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
 
   // The letters wait, still loose, until they come into view, then form;

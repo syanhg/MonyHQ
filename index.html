@@ -18,6 +18,7 @@
   --quiet-ink: #4a4a4a;
   --wordmark: #ebebeb;
   --blush: #f7efea;
+  --highlight: #ebebeb;
   --column: 720px;
   color-scheme: light;
 }
@@ -96,9 +97,12 @@ body::before {
 /* Sixteen slips laid along a slowly turning circle, each one tangent to it,
    so every slip and every gap between them is the same and the whole ring
    is round. Everything is measured off the ring's own width (cqi), so it
-   scales as one piece. */
+   scales as one piece. Clipped to its box: the slips all sit inside the
+   circle, but the turning orbit's corners would poke past a phone's edge
+   and make the whole page scroll sideways. */
 .ring {
   position: relative;
+  overflow: hidden;
   container-type: inline-size;
   width: min(100%, clamp(280px, 50vh, 520px));
   aspect-ratio: 1;
@@ -156,26 +160,91 @@ body::before {
   padding-inline: var(--gutter);
 }
 
-/* Bare on the paper, centred on the column; balanced so the rows come out
-   close to even. */
-.about p {
+/* On the column: the title at its left edge, the paragraph down its right
+   half, and the Frida link at the foot of the left one, level with the
+   paragraph's last line. On a phone they stack, the link last. */
+.intro {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "title text"
+    "more  text";
+  gap: 16px 24px;
+  align-items: start;
+  width: 100%;
   max-width: var(--column);
   margin: 0 auto;
   font-size: 1rem;
   font-weight: 500;
   line-height: 1.2;
   letter-spacing: -0.02em;
-  text-align: center;
+}
+
+@media (max-width: 599px) {
+  .intro {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-template-areas: "title" "text" "more";
+  }
+}
+
+.intro hgroup { grid-area: title; }
+.intro > p { grid-area: text; }
+
+/* A paragraph of its own rather than the bare link, so its line box is the
+   same as the paragraph's and the two last lines share a baseline. */
+.intro .more {
+  grid-area: more;
+  align-self: end;
+}
+
+/* Pulled left like the title, so the letters start on the column's edge. */
+.intro .more a { margin-left: -0.2em; }
+
+/* Marked as if with a highlighter, the band just wider than the word and
+   pulled left so the letters still start on the column's edge. */
+.intro h2 {
+  width: fit-content;
+  margin: 0 0 0 -0.2em;
+  padding: 0.05em 0.2em;
+  background: var(--highlight);
+  font: inherit;
+}
+
+.intro p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* The title proper, under the marked label and larger than the paragraph
+   beside it. */
+.intro hgroup p {
+  margin-top: 12px;
+  font-size: clamp(1.375rem, 2.6vw, 1.75rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   text-wrap: balance;
 }
 
+/* Marked in the title's grey, with the footer's arrow to say it leaves the
+   page; kept on one line so the band never splits. */
 .about a {
+  padding: 0.05em 0.2em;
+  background: var(--highlight);
   color: inherit;
-  text-decoration-line: underline;
-  text-decoration-style: dashed;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
+  text-decoration: none;
+  white-space: nowrap;
 }
+
+.about a svg {
+  width: 0.625em;
+  height: 0.625em;
+  margin-left: 0.15em;
+  transition: transform 160ms ease;
+}
+
+.about a:hover svg { transform: translate(1px, -1px); }
 
 .about a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
@@ -187,7 +256,7 @@ footer {
 }
 
 /* On the wordmark's column, so the line starts under the M and the links
-   end under the y. On a phone the links drop below, still flush left. */
+   end under the y. */
 .colophon {
   display: flex;
   flex-wrap: wrap;
@@ -199,6 +268,15 @@ footer {
 }
 
 .colophon p { margin: 0; }
+
+/* On a phone the two stack, centred: the links first, the copyright
+   under them. */
+@media (max-width: 599px) {
+  .colophon {
+    flex-direction: column-reverse;
+    align-items: center;
+  }
+}
 
 .elsewhere {
   display: flex;
@@ -270,7 +348,7 @@ footer {
   </nav>
 </header>
 
-<section class="about" aria-label="About">
+<section class="about" aria-labelledby="about-title">
   <div class="ring" aria-hidden="true">
     <div class="orbit">
       <span style="--i: 0"><i></i></span>
@@ -291,7 +369,14 @@ footer {
       <span style="--i: 15"><i></i></span>
     </div>
   </div>
-  <p>At MonyCompany, we believe agentic interfaces should feel like water flowing through a river, fluid, continuous, and open-ended. We’re building <a href="https://frida.chat/">Frida</a> around a simple principle of minimalism on the surface, with uncompromising technical complexity beneath.</p>
+  <div class="intro">
+    <hgroup>
+      <h2 id="about-title">Who we are</h2>
+      <p>Simple on the surface, extraordinary beneath.</p>
+    </hgroup>
+    <p>At MonyCompany, we envision an agentic experience that feels both radically intuitive and deeply familiar. We believe the future of human–computer interaction lies in minimalism, where complexity recedes and simplicity emerges. Through minimalism and a deliberate sense of taste, we seek to create interfaces, starting with <a href="https://frida.chat/" target="_blank" rel="noopener noreferrer">Frida<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>, that conceal the extraordinary complexity of intelligent systems behind the simplicity of everyday experience.</p>
+    <p class="more"><a href="https://frida.chat/" target="_blank" rel="noopener noreferrer">Learn more about Frida<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></p>
+  </div>
 </section>
 
 <footer>
